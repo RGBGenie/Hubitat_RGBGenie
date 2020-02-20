@@ -1,6 +1,6 @@
 
 metadata {
-	definition (name: "RGBGenie RGBW LED Controller", namespace: "rgbgenie", author: "RGBGenie") {
+	definition (name: "RGBGenie LED Controller", namespace: "rgbgenie", author: "RGBGenie") {
 		capability "SwitchLevel"
 		capability "ColorControl"
 		capability "ColorTemperature"
