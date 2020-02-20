@@ -17,10 +17,10 @@ metadata {
         command "testWW"
 		command "getColorSupported"
 
-		fingerprint mfr: "0330", prod: "0200", model: "D002", deviceJoinName: "RGBGenie RGBW LED Controller" // EU
-		fingerprint mfr: "0330", prod: "0201", model: "D002", deviceJoinName: "RGBGenie RGBW LED Controller" // US
-		fingerprint mfr: "0330", prod: "0202", model: "D002", deviceJoinName: "RGBGenie RGBW LED Controller" // ANZ
-		fingerprint mfr: "0330", prod: "021A", model: "D002", deviceJoinName: "RGBGenie RGBW LED Controller" // RU
+		fingerprint mfr: "0330", prod: "0200", model: "D002", deviceJoinName: "RGBGenie LED Controller" // EU
+		fingerprint mfr: "0330", prod: "0201", model: "D002", deviceJoinName: "RGBGenie LED Controller" // US
+		fingerprint mfr: "0330", prod: "0202", model: "D002", deviceJoinName: "RGBGenie LED Controller" // ANZ
+		fingerprint mfr: "0330", prod: "021A", model: "D002", deviceJoinName: "RGBGenie LED Controller" // RU
 		inClusters:"0x5E,0x72,0x86,0x26,0x33,0x2B,0x2C,0x71,0x70,0x85,0x59,0x73,0x5A,0x55,0x98,0x9F,0x6C,0x7A" 
 	}
 	preferences {
