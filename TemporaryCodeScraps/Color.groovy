@@ -129,3 +129,32 @@ def huePrecisionToHue(hueValue) {
 	// hue as 0-360 return hue as 0-100
 	return Math.Round(hueValue / (3.6))
 }
+
+private ctToRgb(colorTemp) {
+	// ct with rgb only
+	float red=0
+	float blue=0
+	float green=0
+	def temperature = colorTemp / 100 
+	red = 255
+	green=(99.4708025861 *  Math.log(temperature)) - 161.1195681661
+	if (green < 0) green = 0
+	if (green > 255) green = 255
+	if (temperature >= 65) {
+		blue=255
+	} else if (temperature <= 19) {
+		blue=0
+	} else {
+		blue = temperature - 10
+		blue = (138.5177312231 * Math.log(blue)) - 305.0447927307
+		if (blue < 0) blue = 0
+		if (blue > 255) blue = 255
+	}
+	return ["r": Math.round(red), "g": Math.round(green), "b": Math.round(blue)]
+}
+
+private gammaCorrect(value) {
+	def temp=value/255
+	def correctedValue=(temp>0.4045) ? Math.pow((temp+0.055)/ 1.055, 2.4) : (temp / 12.92)
+	return Math.round(correctedValue * 255) as Integer
+}
