@@ -46,7 +46,7 @@ metadata {
 				input name: "wwComponent", type: "bool", description: "", title: "Enable Warm White Component", defaultValue: true, required: true
 				input name: "wwKelvin", type: "number", description: "", title: "Warm White Temperature", defaultValue: 2700, required: true
 			}
-			input name: "stageModeSpeed", type: "number", description: "", title: "Light Effect Speed 0-255", defaultValue: 0, required: true
+			input name: "stageModeSpeed", type: "number", description: "", title: "Light Effect Speed 0-255 (default 243)", defaultValue: 243, required: true
 			input name: "stageModeHue", type: "number", description: "", title: "Hue Of Fixed Color Light Effects 0-360", defaultValue: 0, required: true
 		}
 	}
