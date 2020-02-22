@@ -5,6 +5,7 @@ metadata {
 	definition (name: "RGBGenie LED Controller", namespace: "rgbgenie", author: "Bryan Copeland") {
 		capability "SwitchLevel"
 		capability "ColorControl"
+		capability "ChangeLevel"
 		capability "ColorTemperature"
 		capability "ColorMode"
 		capability "Configuration"
@@ -22,7 +23,7 @@ metadata {
         command "testGreen"
         command "testBlue"
         command "testWW"
-		command "getColorSupported"
+		command "testCW"
 
 		fingerprint mfr: "0330", prod: "0200", model: "D002", deviceJoinName: "RGBGenie LED Controller" // EU
 		fingerprint mfr: "0330", prod: "0201", model: "D002", deviceJoinName: "RGBGenie LED Controller" // US
@@ -35,6 +36,7 @@ metadata {
 		if (getDataValue("deviceModel")=="" || getDataValue("deviceModel")==null) {
 			input description: "The device type has not been detected.. Please press the configure button", title: "Device Type Detection", displayDuringSetup: false, type: "paragraph", element: "paragraph"
 		} else {
+			input name: "loadStateSave", type: "enum", description: "", title: "Power fail load state restore", defaultValue: 0, required: true, options: [0: "Shut Off Load", 1: "Turn On Load", 2: "Restore Last State"]
 			input name: "deviceType", type: "enum", description: "", title: "Change Device Type", defaultValue: getDataValue("deviceModel"), required: false, options: [0: "Single Color", 1: "CCT", 2: "RGBW"]
 			if (getDataValue("deviceModel") == "1" || getDataValue("deviceModel")=="2") {
 				input name: "colorPrestage", type: "bool", description: "", title: "Enable Color Prestaging", defaultValue: false, required: true
@@ -44,6 +46,8 @@ metadata {
 				input name: "wwComponent", type: "bool", description: "", title: "Enable Warm White Component", defaultValue: true, required: true
 				input name: "wwKelvin", type: "number", description: "", title: "Warm White Temperature", defaultValue: 2700, required: true
 			}
+			input name: "stageModeSpeed", type: "number", description: "", title: "Light Effect Speed 0-255", defaultValue: 0, required: true
+			input name: "stageModeHue", type: "number", description: "", title: "Hue Of Fixed Color Light Effects 0-360", defaultValue: 0, required: true
 		}
 	}
 }
@@ -93,6 +97,11 @@ def testWW(){
     commands ([zwave.switchColorV3.switchColorSet(red: 0, green: 0, blue: 0, warmWhite: value, coldWhite:0)])
 }
 
+def testCW(){
+	def value=255
+    commands ([zwave.switchColorV3.switchColorSet(red: 0, green: 0, blue: 0, warmWhite: 0, coldWhite:255)])
+}
+
 def configure() {
 	initializeVars()
 	interrogate()
@@ -108,9 +117,6 @@ def interrogate() {
 	def cmds = []
 	cmds << zwave.configurationV2.configurationGet([parameterNumber: 4])
 	cmds << zwave.associationV2.associationGet(groupingIdentifier:1)
-	cmds << zwave.associationGrpInfoV1.associationGroupInfoGet()
-	cmds << zwave.associationGrpInfoV1.associationGroupCommandListGet()
-	cmds << zwave.associationCommandConfigurationV1.commandRecordsSupportedGet()
 	commands(cmds)
 }
 
@@ -122,9 +128,18 @@ def updated() {
 		cmds << zwave.configurationV2.configurationSet([parameterNumber: 4, size: 1, scaledConfigurationValue: deviceType.toInteger()])
 		cmds << zwave.configurationV2.configurationGet([parameterNumber: 4])
 	}
+	cmds << zwave.configurationV2.configurationSet([parameterNumber: 2, size: 1, scaledConfigurationValue: loadStateSave])
+	cmds << zwave.configurationV2.configurationSet([parameterNumber: 6, size: 1, scaledConfigurationValue: stageModeSpeed])
+	cmds << zwave.configurationV2.configurationSet([parameterNumber: 8, size: 1, scaledConfigurationValue: hueToHueByte(stageModeHue)])
     log.debug "commands: ${cmds}"
 	commands(cmds)
 }
+
+private hueToHueByte(hueValue) {
+	// hue as 0-360 return hue as 0-255
+	return Math.Round(hueValue / (360/255))
+}
+
 
 private initializeVars() {
 	state.colorReceived = ["red": null, "green": null, "blue": null, "warmWhite": null, "coldWhite": null]
@@ -380,6 +395,16 @@ def refresh() {
 def ping() {
 	log.debug "ping().."
 	refresh()
+}
+
+def startLevelChange(direction) {
+    def upDownVal = direction == "down" ? true : false
+	if (logEnable) log.debug "got startLevelChange(${direction})"
+    commands([zwave.switchMultilevelV3.switchMultilevelStartLevelChange(ignoreStartLevel: true, startLevel: device.currentValue("level"), upDown: upDownVal)])
+}
+
+def stopLevelChange() {
+    commands([zwave.switchMultilevelV3.switchMultilevelStopLevelChange()])
 }
 
 def setLevel(level) {
