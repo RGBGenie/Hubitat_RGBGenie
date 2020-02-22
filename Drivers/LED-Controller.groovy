@@ -303,10 +303,14 @@ def zwaveEvent(hubitat.zwave.commands.switchcolorv3.SwitchColorReport cmd) {
 				} else { 
 					if (wwComponent) {
 						def colorTemp = COLOR_TEMP_MIN + (COLOR_TEMP_DIFF_RGBW / 2)
-						if (state.colorReceived["warmWhite"] != state.colorReceived["red"]) colorTemp = (COLOR_TEMP_MAX - (COLOR_TEMP_DIFF_RGBW * warmWhite) / 255) as Integer
+						def warmWhite = state.colorReceived["warmWhite"]
+						def coldWhite = state.colorReceived["red"]
+						if (warmWhite != coldWhite) colorTemp = (COLOR_TEMP_MAX - (COLOR_TEMP_DIFF_RGBW * warmWhite) / 255) as Integer
 						sendEvent(name: "colorTemperature", value: colorTemp)
 					} else {
-						sendEvent(name: "colorTemperature", value: rgbToCt(state.colorReceived['red'] as Float, state.colorReceived['green'] as Float, state.colorReceived['blue'] as Float))
+						// Math is hard
+						sendEvent(name: "colorTemperature", value: state.ctTarget)
+						//sendEvent(name: "colorTemperature", value: rgbToCt(state.colorReceived['red'] as Float, state.colorReceived['green'] as Float, state.colorReceived['blue'] as Float))
 					}
 
 				}
@@ -445,6 +449,7 @@ def setColorTemperature(temp) {
 		case "1":
 			// Full CCT Devie Type
 			if(temp < COLOR_TEMP_MIN) temp = COLOR_TEMP_MIN
+			state.ctTarget=temp
 			warmValue = ((COLOR_TEMP_MAX - temp) / COLOR_TEMP_DIFF * 255) as Integer
 			coldValue = 255 - warmValue
 			result << zwave.switchColorV3.switchColorSet(warmWhite: warmValue, coldWhite: coldValue, dimmingDuration: duration)
@@ -454,12 +459,14 @@ def setColorTemperature(temp) {
 			if (wwComponent) {
 				// LED strip has warm white
 				if(temp < wwKelvin) temp = wwKelvin
+				state.ctTarget=temp
 				def warmValue = ((COLOR_TEMP_MAX - temp) / COLOR_TEMP_DIFF_RGBW * 255) as Integer
 				def coldValue = 255 - warmValue
 				def rgbTemp = ctToRgb(6500)
 				result << zwave.switchColorV3.switchColorSet(red: gammaCorrect(coldValue), green: gammaCorrect(Math.round(coldValue*0.9765)), blue: gammaCorrect(Math.round(coldValue*0.9922)), warmWhite: gammaCorrect(warmValue), dimmingDuration: duration)
 			} else {
 				// LED strip is RGB and has no white
+				if(temp < COLOR_TEMP_MIN) temp = COLOR_TEMP_MIN
 				def rgbTemp = ctToRgb(temp)
 				state.ctTarget=temp
 				log.debug "r: " + rgbTemp["r"] + " g: " + rgbTemp["g"] + " b: "+ rgbTemp["b"]
