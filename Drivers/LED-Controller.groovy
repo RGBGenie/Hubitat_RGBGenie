@@ -426,20 +426,20 @@ def setColorTemperature(temp) {
 	if(temp > COLOR_TEMP_MAX) temp = COLOR_TEMP_MAX
 	def result = []
 	log.debug "setColorTemperature($temp)"
-	switch (state.deviceType) {
-		case 0: 
+	switch (getDataValue("deviceModel")) {
+		case "0": 
 			// Single Color Device Type
 			log.trace "setColorTemperature not supported on this device type"
 			return
 		break
-		case 1:
+		case "1":
 			// Full CCT Devie Type
 			if(temp < COLOR_TEMP_MIN) temp = COLOR_TEMP_MIN
 			warmValue = ((COLOR_TEMP_MAX - temp) / COLOR_TEMP_DIFF * 255) as Integer
 			coldValue = 255 - warmValue
-			result << zwave.switchColorV3.switchColorSet(warmWhite: warmWhite, coldWhite: 0, dimminngDuration: duration)
+			result << zwave.switchColorV3.switchColorSet(warmWhite: warmValue, coldWhite: coldValue, dimmingDuration: duration)
 		break
-		case 2:
+		case "2":
 			// RGBW Device type
 			if (wwComponent) {
 				// LED strip has warm white
