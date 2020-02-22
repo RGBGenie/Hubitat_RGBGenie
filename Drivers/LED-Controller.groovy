@@ -271,8 +271,12 @@ def zwaveEvent(hubitat.zwave.commands.switchcolorv3.SwitchColorReport cmd) {
 			// CCT Device Type
 			if (CCT_NAMES.every { state.colorReceived[it] != null }) {
 				// Got all CCT colors
+				def warmWhite = state.colorReceived["warmWhite"]
+				def coldWhite = state.colorReceived["coldWhite"]
 				def colorTemp = COLOR_TEMP_MIN + (COLOR_TEMP_DIFF / 2)
-				if (state.colorReceived["warmWhite"] != state.colorReceived["coldWhite"]) colorTemp = (COLOR_TEMP_MAX - (COLOR_TEMP_DIFF * warmWhite) / 255) as Integer
+				if (warmWhite != coldWhite) {
+					colorTemp = (COLOR_TEMP_MAX - (COLOR_TEMP_DIFF * warmWhite) / 255) as Integer
+				}
 				sendEvent(name: "colorTemperature", value: colorTemp)
 				// clear state values
 				CCT_NAMES.collect { state.colorReceived[it] = null }
@@ -297,7 +301,13 @@ def zwaveEvent(hubitat.zwave.commands.switchcolorv3.SwitchColorReport cmd) {
 						sendEvent(name:"level", value:Math.round(lvl), unit:"%")
 					}
 				} else { 
-					// need to parse color temp
+					if (wwComponent) {
+						def colorTemp = COLOR_TEMP_MIN + (COLOR_TEMP_DIFF_RGBW / 2)
+						if (state.colorReceived["warmWhite"] != state.colorReceived["red"]) colorTemp = (COLOR_TEMP_MAX - (COLOR_TEMP_DIFF_RGBW * warmWhite) / 255) as Integer
+						sendEvent(name: "colorTemperature", value: colorTemp)
+					} else {
+						sendEvent(name: "colorTemperature", value: rgbToCt(state.colorReceived['red'] as Float, state.colorReceived['green'] as Float, state.colorReceived['blue'] as Float))
+					}
 
 				}
 				// clear state values
@@ -383,12 +393,12 @@ def setLevel(level, duration) {
 
 def setSaturation(percent) {
 	log.debug "setSaturation($percent)"
-	setColor(saturation: percent)
+	setColor(hue: device.currentValue("hue"), saturation: percent)
 }
 
 def setHue(value) {
 	log.debug "setHue($value)"
-	setColor(hue: value)
+	setColor(hue: value, saturation: device.currentValue("saturation"))
 }
 
 def setColor(value) {
@@ -451,6 +461,7 @@ def setColorTemperature(temp) {
 			} else {
 				// LED strip is RGB and has no white
 				def rgbTemp = ctToRgb(temp)
+				state.ctTarget=temp
 				log.debug "r: " + rgbTemp["r"] + " g: " + rgbTemp["g"] + " b: "+ rgbTemp["b"]
 				log.debug "r: " + gammaCorrect(rgbTemp["r"]) + " g: " + gammaCorrect(rgbTemp["g"]) + " b: " + gammaCorrect(rgbTemp["b"])
 				result << zwave.switchColorV3.switchColorSet(red: gammaCorrect(rgbTemp["r"]), green: gammaCorrect(rgbTemp["g"]), blue: gammaCorrect(rgbTemp["b"]), warmWhite: 0, dimmingDuration: duration)
@@ -585,4 +596,27 @@ def setGenericName(hue){
     }
     if (device.currentValue("saturation") == 0) colorName = "White"
     sendEvent(name: "colorName", value: colorName)
+}
+
+
+def rgbToCt(Float r, Float g, Float b) {
+	r=r/255
+	g=g/255
+	b=b/255
+	//def R=(r>0.4045) ? Math.pow((r+0.055)/ 1.055, 2.4) : ( r / 12.92)
+	//def G=(g>0.4045) ? Math.pow((g+0.055)/ 1.055, 2.4) : ( g / 12.92)
+	//def B=(b>0.4045) ? Math.pow((b+0.055)/ 1.055, 2.4) : ( b / 12.92)
+
+	X = (r * 0.664511) + (g * 0.154324) + (b * 0.162028)
+	Y = (r * 0.283881) + (g * 0.668433) + (b * 0.047685)
+	Z = (r * 0.000088) + (g * 0.072310) + (b * 0.986039)
+	x = (X/(X+Y+Z))
+	y = (Y/(X+Y+Z))
+	return cieToCt(x,y)
+}
+
+def cieToCt(x,y) {
+	n = ((x-0.3320)/(0.1858-y))
+	CCT = (437*Math.pow(n,3))+(3601*Math.pow(n,2))+(6861*n)+5517
+	return Math.round(CCT)
 }
