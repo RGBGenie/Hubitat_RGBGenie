@@ -32,7 +32,9 @@ metadata {
 		inClusters:"0x5E,0x72,0x86,0x26,0x33,0x2B,0x2C,0x71,0x70,0x85,0x59,0x73,0x5A,0x55,0x98,0x9F,0x6C,0x7A" 
 	}
 	preferences {
-		input name: "logEnable", type: "bool", description: "", title: "Enable Debug Log", defaultValue: false, required: true
+		
+		input "logLevel", "enum", title: "Logging Level", options: [1: "Error", 2: "Warn", 3: "Info", 4: "Debug", 5: "Trace"], required: false
+		
 		if (getDataValue("deviceModel")=="" || getDataValue("deviceModel")==null) {
 			input description: "The device type has not been detected.. Please press the configure button", title: "Device Type Detection", displayDuringSetup: false, type: "paragraph", element: "paragraph"
 		} else {
@@ -106,8 +108,8 @@ def configure() {
 }
 
 def logsOff(){
-    log.warn "${device.label?device.label:device.name}: Disabling logging after timeout"
-    device.updateSetting("logEnable",[value:"false",type:"bool"])
+    logWarn "${device.label?device.label:device.name}: Disabling logging after timeout"
+    device.updateSetting("logLevel",[value:"1",type:"number"])
 }
 
 def interrogate() {
@@ -120,6 +122,7 @@ def interrogate() {
 
 def updated() {
 	log.debug "updated().."
+	log.info "Logging level is ${logLevel}"
 	def cmds = [] 
     log.debug "deviceModel: "+getDataValue("deviceModel") + " Updated setting: ${deviceType}"
 	if (getDataValue("deviceModel") != deviceType.toString()) {
@@ -166,7 +169,7 @@ def parse(description) {
 		def cmd = zwave.parse(description, cmdClassVers)
 		if (cmd) {
 			result = zwaveEvent(cmd)
-			if (logEnable) log.debug("${description} parsed to $result")
+			logDebug("${description} parsed to $result")
 		} else {
 			log.warn("unable to parse: ${description}")
 		}
@@ -406,7 +409,7 @@ def ping() {
 
 def startLevelChange(direction) {
     def upDownVal = direction == "down" ? true : false
-	if (logEnable) log.debug "got startLevelChange(${direction})"
+	logDebug "got startLevelChange(${direction})"
     commands([zwave.switchMultilevelV3.switchMultilevelStartLevelChange(ignoreStartLevel: true, startLevel: device.currentValue("level"), upDown: upDownVal)])
 }
 
@@ -443,13 +446,13 @@ def setColor(value) {
 	if (state.deviceType==2) {
 		if (value.hue == null || value.saturation == null) return
 		if (value.level == null) value.level=100
-		if (logEnable) log.debug "setColor($value)"
+		logDebug "setColor($value)"
 		def result = []
 		def rgb = ColorUtils.hsvToRGB([value.hue, value.saturation, value.level])
 		log.debug "r:" + rgb[0] + ", g: " + rgb[1] +", b: " + rgb[2]
 		result << zwave.switchColorV3.switchColorSet(red: rgb[0], green: rgb[1], blue: rgb[2], warmWhite:0, dimmingDuration: duration)
 		//if ((device.currentValue("switch") != "on") && (!colorStaging)){
-		if (logEnable) log.debug "Bulb is off. Turning on"
+		logDebug "Bulb is off. Turning on"
  			result << zwave.basicV1.basicSet(value: 0xFF)
 			result << zwave.switchMultilevelV3.switchMultilevelGet()
 		//}
@@ -636,6 +639,25 @@ def setGenericName(hue){
     sendEvent(name: "colorName", value: colorName)
 }
 
+def logError(msg) {
+  if (logLevel?.toInteger() >= 1 || logLevel == null) { log.error msg }
+}
+
+def logWarn(msg) {
+  if (logLevel?.toInteger() >= 2) { log.warn msg }
+}
+
+def logInfo(msg) {
+  if (logLevel?.toInteger() >= 3) { log.info msg }
+}
+
+def logDebug(msg) {
+  if (logLevel?.toInteger() >= 4) { log.debug msg }
+}
+
+def logTrace(msg) {
+  if (logLevel?.toInteger() >= 5) { log.trace msg }
+}
 
 def rgbToCt(Float r, Float g, Float b) {
 	r=r/255
