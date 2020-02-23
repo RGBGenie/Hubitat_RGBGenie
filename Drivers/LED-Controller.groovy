@@ -74,15 +74,6 @@ private getCOLOR_TEMP_DIFF() { COLOR_TEMP_MAX - COLOR_TEMP_MIN }
 private getCMD_CLASS_VERS() { [0x33:3,0x26:3,0x85:2, 0x71:8] }
 private getZWAVE_COLOR_COMPONENT_ID() { [warmWhite: 0, coldWhite: 1, red: 2, green: 3, blue: 4] }
 
-void getColorSupported() {
-	commands([zwave.switchColorV3.switchColorSupportedGet()])
-}
-
-
-void testColorComponent(id) {
-	
-
-}
 def testRed() {
 	def value=255
     commands ([zwave.switchColorV3.switchColorSet(red: value, green: 0, blue: 0, warmWhite:0, coldWhite:0)])
@@ -143,7 +134,7 @@ def updated() {
 
 private hueToHueByte(hueValue) {
 	// hue as 0-360 return hue as 0-255
-	return Math.Round(hueValue / (360/255))
+	return Math.round(hueValue / (360/255))
 }
 
 
