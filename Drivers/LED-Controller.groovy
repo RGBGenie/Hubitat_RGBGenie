@@ -48,6 +48,12 @@ metadata {
 			}
 			input name: "stageModeSpeed", type: "number", description: "", title: "Light Effect Speed 0-255 (default 243)", defaultValue: 243, required: true
 			input name: "stageModeHue", type: "number", description: "", title: "Hue Of Fixed Color Light Effects 0-360", defaultValue: 0, required: true
+			if (getDataValue("deviceModel") == "2") {
+				input description: "<table><tr><th>Number</th><th>Color Component</th></tr><tr><td>1</td><td>Red</td></tr><tr><td>2</td><td>Green</td></tr><tr><td>3</td><td>Blue</td></tr><td>4</td><td>WarmWhite</td></tr></table>", title: "Output Descriptions", displayDuringSetup: false, type: "paragraph", element: "paragraph"
+			}
+			if (getDataValue("deviceModel") == "1") {
+				input description: "<table><tr><th>Number</th><th>Color Component</th></tr><tr><td>1</td><td>WarmWhite</td></tr><tr><td>2</td><td>ColdWhite</td></tr><tr><td>3</td><td>WarmWhite</td></tr><td>4</td><td>ColdWhite</td></tr></table>", title: "Output Descriptions", displayDuringSetup: false, type: "paragraph", element: "paragraph"
+			}
 		}
 	}
 }
@@ -65,7 +71,7 @@ private getCOLOR_TEMP_MIN() { 2700 }
 private getCOLOR_TEMP_MAX() { 6500 }
 private getCOLOR_TEMP_DIFF_RGBW() { COLOR_TEMP_MAX - wwKelvin }
 private getCOLOR_TEMP_DIFF() { COLOR_TEMP_MAX - COLOR_TEMP_MIN }
-private getCMD_CLASS_VERS() { [0x33:3,0x26:3,0x85:2] }
+private getCMD_CLASS_VERS() { [0x33:3,0x26:3,0x85:2, 0x71:8] }
 private getZWAVE_COLOR_COMPONENT_ID() { [warmWhite: 0, coldWhite: 1, red: 2, green: 3, blue: 4] }
 
 void getColorSupported() {
@@ -364,6 +370,16 @@ def zwaveEvent(hubitat.zwave.commands.securityv1.SecurityMessageEncapsulation cm
 		result
 	}
 }
+
+def zwaveEvent(hubitat.zwave.commands.notificationv8.NotificationReport cmd) {
+	log.debug "Notification received: ${cmd}"
+	if (cmd.notificationType == 9) {
+		if (cmd.event == 7) {
+			log.warn "Emergency shutoff load malfunction"
+		}
+	}
+}
+
 
 def zwaveEvent(hubitat.zwave.Command cmd) {
     log.debug "skip:${cmd}"
