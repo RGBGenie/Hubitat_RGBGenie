@@ -36,6 +36,7 @@ metadata {
 		if (getDataValue("deviceModel")=="" || getDataValue("deviceModel")==null) {
 			input description: "The device type has not been detected.. Please press the configure button", title: "Device Type Detection", displayDuringSetup: false, type: "paragraph", element: "paragraph"
 		} else {
+			input name: "dimmerSpeed", type: "number", description: "", title: "Dimmer Ramp Rate 0-255", defaultValue: 0, required: true
 			input name: "loadStateSave", type: "enum", description: "", title: "Power fail load state restore", defaultValue: 0, required: true, options: [0: "Shut Off Load", 1: "Turn On Load", 2: "Restore Last State"]
 			input name: "deviceType", type: "enum", description: "", title: "Change Device Type", defaultValue: getDataValue("deviceModel"), required: false, options: [0: "Single Color", 1: "CCT", 2: "RGBW"]
 			if (getDataValue("deviceModel") == "1" || getDataValue("deviceModel")=="2") {
@@ -71,7 +72,7 @@ private getCOLOR_TEMP_MIN() { 2700 }
 private getCOLOR_TEMP_MAX() { 6500 }
 private getCOLOR_TEMP_DIFF_RGBW() { COLOR_TEMP_MAX - wwKelvin }
 private getCOLOR_TEMP_DIFF() { COLOR_TEMP_MAX - COLOR_TEMP_MIN }
-private getCMD_CLASS_VERS() { [0x33:3,0x26:3,0x85:2, 0x71:8] }
+private getCMD_CLASS_VERS() { [0x33:3,0x26:3,0x85:2, 0x71:8, 0x20:1] }
 private getZWAVE_COLOR_COMPONENT_ID() { [warmWhite: 0, coldWhite: 1, red: 2, green: 3, blue: 4] }
 
 def testRed() {
