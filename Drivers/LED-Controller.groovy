@@ -126,7 +126,7 @@ def updated() {
 		cmds << zwave.configurationV2.configurationGet([parameterNumber: 4])
 	}
 	cmds << zwave.configurationV2.configurationSet([parameterNumber: 2, size: 1, scaledConfigurationValue: loadStateSave])
-	cmds << zwave.configurationV2.configurationSet([parameterNumber: 6, size: 1, scaledConfigurationValue: stageModeSpeed])
+	cmds << zwave.configurationV2.configurationSet([parameterNumber: 6, size: 1, configurationValue: [stageModeSpeed]])
 	cmds << zwave.configurationV2.configurationSet([parameterNumber: 8, size: 1, scaledConfigurationValue: hueToHueByte(stageModeHue)])
     log.debug "commands: ${cmds}"
 	commands(cmds)
