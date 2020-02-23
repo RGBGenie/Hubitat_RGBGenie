@@ -29,5 +29,4 @@ def mainPage() {
 			paragraph "<br><br><br><br></div>"
 		}
 	}
-
 }
