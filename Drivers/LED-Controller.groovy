@@ -38,11 +38,11 @@ metadata {
         command "testWW"
 		command "testCW"
 
-		fingerprint mfr: "0330", prod: "0200", model: "D002", deviceJoinName: "RGBGenie LED Controller" // EU
-		fingerprint mfr: "0330", prod: "0201", model: "D002", deviceJoinName: "RGBGenie LED Controller" // US
-		fingerprint mfr: "0330", prod: "0202", model: "D002", deviceJoinName: "RGBGenie LED Controller" // ANZ
-		fingerprint mfr: "0330", prod: "021A", model: "D002", deviceJoinName: "RGBGenie LED Controller" // RU
-		inClusters:"0x5E,0x72,0x86,0x26,0x33,0x2B,0x2C,0x71,0x70,0x85,0x59,0x73,0x5A,0x55,0x98,0x9F,0x6C,0x7A" 
+		fingerprint mfr: "0330", prod: "0200", deviceId: "D002", inClusters:"0x5E,0x72,0x86,0x26,0x33,0x2B,0x2C,0x71,0x70,0x85,0x59,0x73,0x5A,0x55,0x98,0x9F,0x6C,0x7A", deviceJoinName: "RGBGenie LED Controller" // EU
+		fingerprint mfr: "0330", prod: "0201", deviceId: "D002", inClusters:"0x5E,0x72,0x86,0x26,0x33,0x2B,0x2C,0x71,0x70,0x85,0x59,0x73,0x5A,0x55,0x98,0x9F,0x6C,0x7A", deviceJoinName: "RGBGenie LED Controller" // US
+		fingerprint mfr: "0330", prod: "0202", deviceId: "D002", inClusters:"0x5E,0x72,0x86,0x26,0x33,0x2B,0x2C,0x71,0x70,0x85,0x59,0x73,0x5A,0x55,0x98,0x9F,0x6C,0x7A", deviceJoinName: "RGBGenie LED Controller" // ANZ
+		fingerprint mfr: "0330", prod: "021A", deviceId: "D002", inClusters:"0x5E,0x72,0x86,0x26,0x33,0x2B,0x2C,0x71,0x70,0x85,0x59,0x73,0x5A,0x55,0x98,0x9F,0x6C,0x7A", deviceJoinName: "RGBGenie LED Controller" // RU
+
 	}
 	preferences {
 		
@@ -448,12 +448,6 @@ def startLevelChange(direction) {
 
 def stopLevelChange() {
     commands([zwave.switchMultilevelV3.switchMultilevelStopLevelChange()])
-}
-
-def setLevel(level) {
-	// Sets the level of a device (with default dimmer speed)
-
-	setLevel(level, settings.dimmerSpeed)
 }
 
 def setLevel(level, duration = settings.dimmerSpeed) {
