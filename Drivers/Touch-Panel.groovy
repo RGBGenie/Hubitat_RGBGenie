@@ -6,41 +6,51 @@ metadata {
         capability "Actuator"
         capability "Configuration"
         capability "Refresh"
-        //command "setAssociationGroup", ["number", "enum", "number", "number"] // group number, nodes, action (0 - remove, 1 - add), multi-channel endpoint (optional)
 
+		fingerprint mfr:"0330", prod:"0301", model:"A109", deviceJoinName: "RGBGenie Dimmer Touch Panel"
+        fingerprint mfr:"0330", prod:"0301", model:"A106", deviceJoinName: "RGBGenie 3 Scene Color Touch Panel"
+        fingerprint mfr:"0330", prod:"0301", model:"A105", deviceJoinName: "RGBGenie 3 Zone Color Touch Panel"
+        fingerprint mfr:"0330", prod:"0301", model:"A101", deviceJoinName: "RGBGenie Color Temperature Touch Panel"
 
-		fingerprint mfr:"0330", prod:"0301", model:"A109", deviceJoinName: "RGBGenie Touch Panel" // US
 		//inClusters: "0x5E,0x85,0x59,0x8E,0x55,0x86,0x72,0x5A,0x73,0x98,0x9F,0x6C,0x5B,0x7A", outClusters: "0x26,0x33,0x2B,0x2C"
 
     }
     preferences {
-        input name: "addHubZone1", type: "bool", description: "", title: "Add hubitat to Zone 1", required: true, defaultValue: false
-        input name: "addHubZone2", type: "bool", description: "", title: "Add hubitat to Zone 2", required: true, defaultValue: false
-        input name: "addHubZone3", type: "bool", description: "", title: "Add hubitat to Zone 3", required: true, defaultValue: false
+        input name: "addHubZone1", type: "bool", description: "", title: "Create child driver for Zone 1", required: true, defaultValue: false
+        if (getDataValue("deviceId")!="41222") {
+            input name: "addHubZone2", type: "bool", description: "", title: "Create child driver for Zone 2", required: true, defaultValue: false
+            input name: "addHubZone3", type: "bool", description: "", title: "Create child driver for Zone 3", required: true, defaultValue: false
+        }
         input name: "associationsZ1", type: "string", description: "", title: "Zone 1 Associations", required: true
-        input name: "associationsZ2", type: "string", description: "", title: "Zone 2 Associations", required: true
-        input name: "associationsZ3", type: "string", description: "", title: "Zone 3 Associations", required: true
+        if (getDataValue("deviceId")!="41222") {
+            input name: "associationsZ2", type: "string", description: "", title: "Zone 2 Associations", required: true
+            input name: "associationsZ3", type: "string", description: "", title: "Zone 3 Associations", required: true
+        }
+		input description: "To add nodes to zone associations use the Hexidecimal nodeID from the z-wave device list separated by commas", title: "Direct Association", displayDuringSetup: false, type: "paragraph", element: "paragraph"
 	}
 }
 
 private getDRIVER_VER() { "0.001" }
 private getCOMMAND_CLASS_VERS() { [] }
 private getZONE_MODEL() {
-    // add some stuff here to check if model is a 3 zone 
-    
-    return true
+    if (getDataValue("deviceId")!="41222") {
+        return true
+    } else {
+        return false
+	}
 }
 private getNUMBER_OF_GROUPS() { 
     if (ZONE_MODEL) {
         return 4
 	} else {
-        return 1
+        return 2
 	}
 }
 
 def initialize() {
     def cmds=[]
-    if (parseInt(getDataValue("driverVer")) < 0.001) {
+
+    if (getDataValue("driverVer") != "0.001") {
         updateDataValue("zwaveAssociationG1", "")
         updateDataValue("zwaveAssociationG2", "")
         updateDataValue("zwaveAssociationG3", "")
@@ -60,7 +70,10 @@ def updated() {
     for (int i = 1 ; i <= 3; i++) {
         if (settings."addHubZone$i") {
             if (!getChildDevice("${device.deviceNetworkId}-$i")) {
-                addChildDevice("rgbgenie", "RGBGenie Touch Panel Child", "${device.deviceNetworkId}-$i", [completedSetup: true, label: "${device.displayName} (Zone$i)", isComponent: true, componentName: "zone$i", componentLabel: "Zone $i"])
+                def child=addChildDevice("rgbgenie", "RGBGenie Touch Panel Child", "${device.deviceNetworkId}-$i", [completedSetup: true, label: "${device.displayName} (Zone$i)", isComponent: true, componentName: "zone$i", componentLabel: "Zone $i"])
+                if (child) {
+                    child.defineMe(getDataValue("deviceId"))           
+				}        
             }
             cmds << addHubMultiChannel(i)
         } else {
@@ -178,7 +191,6 @@ def removeHubMultiChannel(zone) {
 def processAssociations(){
     def cmds = []
     cmds += setDefaultAssociation()
-    if (ZONE_MODEL) { 
         def associationGroups = NUMBER_OF_GROUPS
         for (int i = 2 ; i <= associationGroups; i++) {
             def z=i-1
@@ -214,7 +226,6 @@ def processAssociations(){
 				}                            
 			}
        }
-    }
     log.debug "processAssociations cmds: ${cmds}"
     return cmds
 }

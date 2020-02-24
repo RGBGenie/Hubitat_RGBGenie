@@ -16,7 +16,7 @@ metadata {
 	}
 
 	preferences {
-		if (getDataValue("deviceModel")!="1") {
+		if (getDataValue("deviceModel")!="41222") {
 			input name: "sceneCapture", type: "bool", description: "", title: "Enable scene capture and activate", defaultValue: false, required: true
 		}
 	}
@@ -27,9 +27,9 @@ private getCOLOR_TEMP_MAX() { 6500 }
 private getCOLOR_TEMP_DIFF() { COLOR_TEMP_MAX - COLOR_TEMP_MIN }
 
 def updated() {
-	if (sceneCapture && getDataValue("deviceModel")!="1") { 
+	if (sceneCapture && getDataValue("deviceModel")=="41221") { 
 		sendEvent(name: "numberOfButtons", value: 0) 
-	} else if (!sceneCapture && getDataValue("deviceModel")!="1") {
+	} else if (!sceneCapture && getDataValue("deviceModel")!="41221") {
 		sendEvent(name: "numberOfButtons", value: 3)
 	}
 }
@@ -40,11 +40,17 @@ def installed() {
 
 def defineMe(value) {
 	device.updateDataValue("deviceModel", "$value")
-	if (value==1) { 
+	if (value=="41222") { 
 		sendEvent(name: "numberOfButtons", value: 0)
 	} else {
 		sendEvent(name: "numberOfButtons", value: 3)
 	}
+	sendEvent(name: "colorMode", value: "CT")
+	sendEvent(name: "colorTemperature", value: 2700)
+	sendEvent(name: "hue", value: 0)
+	sendEvent(name: "saturation", value: 100)
+	sendEvent(name: "level", value: 100)
+	sendEvent(name: "switch", value: "on")
 }
 
 def parse(description) {
