@@ -10,7 +10,7 @@ import groovy.transform.Field
 
 
 metadata {
-    definition (name: "RGBGenie Micro Controller",namespace: "rgbgenie", author: "RGBGenie") {
+    definition (name: "RGBGenie Micro Controller ZW",namespace: "rgbgenie", author: "RGBGenie") {
         capability "Actuator"
         capability "Switch"
         capability "Switch Level"

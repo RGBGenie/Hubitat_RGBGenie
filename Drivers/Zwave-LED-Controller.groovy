@@ -18,7 +18,7 @@
 import hubitat.helper.ColorUtils
 
 metadata {
-	definition (name: "RGBGenie LED Controller", namespace: "rgbgenie", author: "RGBGenie") {
+	definition (name: "RGBGenie LED Controller ZW", namespace: "rgbgenie", author: "RGBGenie") {
 		capability "Actuator"
 		capability "ChangeLevel"
 		capability "ColorControl"

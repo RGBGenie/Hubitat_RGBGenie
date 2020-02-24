@@ -5,7 +5,7 @@
 *
 */
 metadata {
-	definition (name: "RGBGenie Touch Panel", namespace: "rgbgenie", author: "RGBGenie") {
+	definition (name: "RGBGenie Touch Panel ZW", namespace: "rgbgenie", author: "RGBGenie") {
         capability "Actuator"
         capability "Configuration"
         capability "Refresh"
@@ -65,7 +65,7 @@ def updated() {
     for (int i = 1 ; i <= 3; i++) {
         if (settings."addHubZone$i") {
             if (!getChildDevice("${device.deviceNetworkId}-$i")) {
-                def child=addChildDevice("rgbgenie", "RGBGenie Touch Panel Child", "${device.deviceNetworkId}-$i", [completedSetup: true, label: "${device.displayName} (Zone$i)", isComponent: true, componentName: "zone$i", componentLabel: "Zone $i"])
+                def child=addChildDevice("rgbgenie", "RGBGenie Touch Panel Child ZW", "${device.deviceNetworkId}-$i", [completedSetup: true, label: "${device.displayName} (Zone$i)", isComponent: true, componentName: "zone$i", componentLabel: "Zone $i"])
                 if (child) {
                     child.defineMe(getDataValue("deviceId"))   
                     cmds << addHubMultiChannel(i)
