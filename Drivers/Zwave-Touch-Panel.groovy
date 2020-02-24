@@ -5,7 +5,7 @@
 *
 */
 metadata {
-	definition (name: "RGBGenie Touch Panel", namespace: "rgbgenie", author: "RGBGenie") {
+	definition (name: "RGBGenie Touch Panel ZW", namespace: "rgbgenie", author: "RGBGenie") {
         capability "Actuator"
         capability "Configuration"
         capability "Refresh"
@@ -17,17 +17,16 @@ metadata {
 
     }
     preferences {
-        input name: "addHubZone1", type: "bool", description: "", title: "Create child driver for Zone 1", required: true, defaultValue: false
+        input name: "addHubZone1", type: "bool", description: "This creates a child device on the zone for sending the panel actions to the hub. Using the built in mirror app allows synchronization of the panel actions to groups of lights", title: "Create child driver for Zone 1", required: true, defaultValue: false
         if (getDataValue("deviceId")!="41222") {
-            input name: "addHubZone2", type: "bool", description: "", title: "Create child driver for Zone 2", required: true, defaultValue: false
-            input name: "addHubZone3", type: "bool", description: "", title: "Create child driver for Zone 3", required: true, defaultValue: false
+            input name: "addHubZone2", type: "bool", description: "This creates a child device on the zone for sending the panel actions to the hub. Using the built in mirror app allows synchronization of the panel actions to groups of lights", title: "Create child driver for Zone 2", required: true, defaultValue: false
+            input name: "addHubZone3", type: "bool", description: "This creates a child device on the zone for sending the panel actions to the hub. Using the built in mirror app allows synchronization of the panel actions to groups of lights", title: "Create child driver for Zone 3", required: true, defaultValue: false
         }
-        input name: "associationsZ1", type: "string", description: "", title: "Zone 1 Associations", required: true
+        input name: "associationsZ1", type: "string", description: "To add nodes to zone associations use the Hexidecimal nodeID from the z-wave device list separated by commas into the space below", title: "Zone 1 Associations", required: true
         if (getDataValue("deviceId")!="41222") {
-            input name: "associationsZ2", type: "string", description: "", title: "Zone 2 Associations", required: true
-            input name: "associationsZ3", type: "string", description: "", title: "Zone 3 Associations", required: true
+            input name: "associationsZ2", type: "string", description: "To add nodes to zone associations use the Hexidecimal nodeID from the z-wave device list separated by commas into the space below", title: "Zone 2 Associations", required: true
+            input name: "associationsZ3", type: "string", description: "To add nodes to zone associations use the Hexidecimal nodeID from the z-wave device list separated by commas into the space below", title: "Zone 3 Associations", required: true
         }
-		input description: "To add nodes to zone associations use the Hexidecimal nodeID from the z-wave device list separated by commas", title: "Direct Association", displayDuringSetup: false, type: "paragraph", element: "paragraph"
         input name: "logEnable", type: "bool", description: "", title: "Enable Debug Logging", defaultValue: true, required: true
 	}
 }
@@ -51,16 +50,7 @@ private getNUMBER_OF_GROUPS() {
 
 def initialize() {
     def cmds=[]
-
-    if (getDataValue("driverVer") != "0.001") {
-        updateDataValue("zwaveAssociationG1", "")
-        updateDataValue("zwaveAssociationG2", "")
-        updateDataValue("zwaveAssociationG3", "")
-        updateDataValue("zwaveAssociationG4", "")
-        //cmds << zwave.associationV2.associationSet(groupingIdentifier: 1, nodeId: zwaveHubNodeId)
-	}
     cmds+=pollAssociations()
-    updateDataValue("driverVer", DRIVER_VER)
     commands(cmds)
 }
 
@@ -72,24 +62,25 @@ def logsOff() {
 
 def updated() {
     def cmds=[]
-    cmds+=processAssociations()
-    cmds+=pollAssociations()
     for (int i = 1 ; i <= 3; i++) {
         if (settings."addHubZone$i") {
             if (!getChildDevice("${device.deviceNetworkId}-$i")) {
-                def child=addChildDevice("rgbgenie", "RGBGenie Touch Panel Child", "${device.deviceNetworkId}-$i", [completedSetup: true, label: "${device.displayName} (Zone$i)", isComponent: true, componentName: "zone$i", componentLabel: "Zone $i"])
+                def child=addChildDevice("rgbgenie", "RGBGenie Touch Panel Child ZW", "${device.deviceNetworkId}-$i", [completedSetup: true, label: "${device.displayName} (Zone$i)", isComponent: true, componentName: "zone$i", componentLabel: "Zone $i"])
                 if (child) {
-                    child.defineMe(getDataValue("deviceId"))           
+                    child.defineMe(getDataValue("deviceId"))   
+                    cmds << addHubMultiChannel(i)
 				}        
             }
-            cmds << addHubMultiChannel(i)
+            cmds += addHubMultiChannel(i)
         } else {
             if (getChildDevice("${device.deviceNetworkId}-$i")) {
-                deleteChildDevice("${device.deviceNetworkId}-$i")
+                deleteChildDevice("${device.deviceNetworkId}-$i") 
             }
-            cmds << removeHubMultiChannel(i)
+            cmds += removeHubMultiChannel(i)
 	    }
     }
+    cmds+=processAssociations()
+    cmds+=pollAssociations()
     if (logEnable) log.debug "updated cmds: ${cmds}"
    	if (logEnable) runIn(1800,logsOff)
     commands(cmds)
@@ -100,6 +91,7 @@ def refresh() {
     def cmds=[]
     cmds+=pollAssociations()
     commands(cmds)
+    
 }
 
 def installed() {
@@ -114,6 +106,7 @@ def pollAssociations() {
     def cmds=[]
     for(int i = 1;i<=NUMBER_OF_GROUPS;i++) {
         cmds << zwave.associationV2.associationGet(groupingIdentifier:i)
+        cmds << zwave.multiChannelAssociationV2.multiChannelAssociationGet(groupingIdentifier: i)
     }
     if (logEnable) log.debug "pollAssociations cmds: ${cmds}"
     return cmds
@@ -141,6 +134,11 @@ def zwaveEvent(hubitat.zwave.commands.securityv1.SecurityMessageEncapsulation cm
     }
 }
 
+def zwaveEvent(hubitat.zwave.commands.multichannelassociationv2.MultiChannelAssociationReport cmd) {
+    if (logEnable) log.debug "multichannel association report: ${cmd}"
+    device.updateDataValue("zwaveAssociationMultiG${cmd.groupingIdentifier}", "${cmd.multiChannelNodeIds}" )
+}
+
 def zwaveEvent(hubitat.zwave.Command cmd) {
     if (logEnable) log.debug "skip:${cmd}"
 }
@@ -150,9 +148,9 @@ def parse(description) {
 		def cmd = zwave.parse(description, CMD_CLASS_VERS)
 		if (cmd) {
 			result = zwaveEvent(cmd)
-			logDebug("${description} parsed to $result")
+			if (logEnable) log.debug("${description} parsed to $result")
 		} else {
-			logWarn("unable to parse: ${description}")
+			log.warn("unable to parse: ${description}")
 		}
 	}
 }
@@ -174,6 +172,7 @@ def setDefaultAssociation() {
     //def hubitatHubID = (zwaveHubNodeId.toString().format( '%02x', zwaveHubNodeId )).toUpperCase()
     def cmds=[]
     cmds << zwave.associationV2.associationSet(groupingIdentifier: 1, nodeId: zwaveHubNodeId)
+    cmds << zwave.multiChannelAssociationV2.multiChannelAssociationGet(groupingIdentifier: group)
     return cmds
 }
 
@@ -181,6 +180,7 @@ def addHubMultiChannel(zone) {
     def cmds=[]
     def group=zone+1
     cmds << zwave.multiChannelAssociationV2.multiChannelAssociationSet(groupingIdentifier: group, nodeId: [0,zwaveHubNodeId,zone as Integer])
+    cmds << zwave.multiChannelAssociationV2.multiChannelAssociationGet(groupingIdentifier: group)
     return cmds
 }
 

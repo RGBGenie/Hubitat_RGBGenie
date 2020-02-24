@@ -10,11 +10,13 @@ import groovy.transform.Field
 
 
 metadata {
-    definition (name: "RGBGenie Micro Controller",namespace: "rgbgenie", author: "RGBGenie") {
+    definition (name: "RGBGenie Micro Controller ZW",namespace: "rgbgenie", author: "RGBGenie") {
         capability "Actuator"
         capability "Switch"
         capability "Switch Level"
         capability "ChangeLevel"
+
+		command "refresh"
 
 		fingerprint mfr: "0330", prod: "0201", deviceId: "D005", inClusters:"0x5E,0x72,0x86,0x26,0x2B,0x2C,0x71,0x70,0x85,0x59,0x73,0x5A,0x55,0x98,0x9F,0x6C,0x7A", deviceJoinName: "RGBGenie Micro Controller" // EU
 
@@ -28,7 +30,7 @@ metadata {
     }
 }
 
-private getCMD_CLASS_VERS() { [0x26:3,0x85:2,0x71:8,0x20:1] }
+private getCMD_CLASS_VERS() { [0x20:1,0x26:3,0x85:2,0x71:8,0x20:1] }
 
 def logsOff() {
 	log.warn "debug logging disabled..."
@@ -103,10 +105,11 @@ def parse(description) {
 	if (description != "updated") {
 		def cmd = zwave.parse(description, CMD_CLASS_VERS)
 		if (cmd) {
+			log.debug "${cmd}"
 			result = zwaveEvent(cmd)
-			logDebug("${description} parsed to $result")
+			if (logEnable) log.debug("${description} parsed to $result")
 		} else {
-			logWarn("unable to parse: ${description}")
+			log.warn("unable to parse: ${description}")
 		}
 	}
 }
@@ -144,7 +147,6 @@ def refresh() {
 	// Queries a device for changes 
 	def cmds=[]
 	cmds << zwave.switchMultilevelV3.switchMultilevelGet()
-	cmds << zwave.configurationV2.configurationGet([parameterNumber: 5])
 	commands(cmds)
 }
 
@@ -163,11 +165,18 @@ def off() {
 def startLevelChange(direction) {
     def upDownVal = direction == "down" ? 1 : 0
 	if (logEnable) log.debug "got startLevelChange(${direction})"
-    commands([zwave.switchMultilevelV3.switchMultilevelStartLevelChange(ignoreStartLevel: 1, startLevel: 1, upDown: upDownVal)])
+	def cmds=[]
+	cmds << zwave.switchMultilevelV2.switchMultilevelStartLevelChange(ignoreStartLevel: 1, startLevel: 1, upDown: upDownVal)
+	cmds << zwave.switchMultilevelV2.switchMultilevelGet()
+	//log.debug "${cmds}"
+    commands(cmds)
 }
 
 def stopLevelChange() {
-    commands([zwave.switchMultilevelV3.switchMultilevelStopLevelChange()])
+    commands([
+		zwave.switchMultilevelV3.switchMultilevelStopLevelChange(),
+		zwave.switchMultilevelV3.switchMultilevelGet()
+	])
 }
 
 def setLevel(level) {
@@ -175,8 +184,11 @@ def setLevel(level) {
 }
 
 def setLevel(level, duration) {
+	if (level > 99) level = 99
+
 	if (logEnable) log.debug "setLevel($level, $duration)"
 	commands([
-		zwave.switchMultilevelV3.switchMultilevelSet(value: level, dimmingDuration: duration)
-	])
+		zwave.switchMultilevelV3.switchMultilevelSet(value: level, dimmingDuration: duration),
+		zwave.switchMultilevelV3.switchMultilevelGet()
+	],1000)
 }

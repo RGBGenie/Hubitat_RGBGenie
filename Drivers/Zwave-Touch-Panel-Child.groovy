@@ -8,7 +8,7 @@
 import hubitat.helper.ColorUtils
 
 metadata {
-	definition (name: "RGBGenie Touch Panel Child", namespace: "rgbgenie", author: "RGBGenie") {
+	definition (name: "RGBGenie Touch Panel Child ZW", namespace: "rgbgenie", author: "RGBGenie") {
 		capability "SwitchLevel"
 		capability "PushableButton"
 		capability "HoldableButton"
