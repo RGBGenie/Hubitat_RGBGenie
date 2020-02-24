@@ -194,7 +194,7 @@ def installed() {
 
 def parse(description) {
 	if (description != "updated") {
-		def cmd = zwave.parse(description, cmdClassVers)
+		def cmd = zwave.parse(description, CMD_CLASS_VERS)
 		if (cmd) {
 			result = zwaveEvent(cmd)
 			logDebug("${description} parsed to $result")
@@ -378,7 +378,7 @@ def zwaveEvent(hubitat.zwave.commands.hailv1.Hail cmd) {
 }
 
 def zwaveEvent(hubitat.zwave.commands.securityv1.SecurityMessageEncapsulation cmd) {
-	def encapsulatedCommand = cmd.encapsulatedCommand(cmdClassVers)
+	def encapsulatedCommand = cmd.encapsulatedCommand(CMD_CLASS_VERS)
 	if (encapsulatedCommand) {
 		state.sec = 1
 		def result = zwaveEvent(encapsulatedCommand)
@@ -444,9 +444,9 @@ def ping() {
 }
 
 def startLevelChange(direction) {
-    def upDownVal = direction == "down" ? true : false
+    def upDownVal = direction == "down" ? 1 : 0
 	logDebug "got startLevelChange(${direction})"
-    commands([zwave.switchMultilevelV3.switchMultilevelStartLevelChange(ignoreStartLevel: true, startLevel: device.currentValue("level"), upDown: upDownVal)])
+    commands([zwave.switchMultilevelV3.switchMultilevelStartLevelChange(ignoreStartLevel: 1, startLevel: 1, upDown: upDownVal)])
 }
 
 def stopLevelChange() {
@@ -605,13 +605,11 @@ private crcEncap(hubitat.zwave.Command cmd) {
 }
 
 private command(hubitat.zwave.Command cmd) {
-//	if (zwaveInfo.zw.contains("s") || state.sec == 1) {
-//		secEncap(cmd)
-//	} else if (zwaveInfo.cc.contains("56")){
-//		crcEncap(cmd)
-//	} else {
-		cmd.format()
-//	}
+	if (getDataValue("zwaveSecurePairingComplete") == "true") {
+		return zwave.securityV1.securityMessageEncapsulation().encapsulate(cmd).format()
+    } else {
+		return cmd.format()
+    }	
 }
 
 private commands(commands, delay=200) {
