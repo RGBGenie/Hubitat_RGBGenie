@@ -9,11 +9,14 @@ metadata {
         //command "setAssociationGroup", ["number", "enum", "number", "number"] // group number, nodes, action (0 - remove, 1 - add), multi-channel endpoint (optional)
 
 
-		fingerprint mfr:"0330", prod:"021A", model:"D002", deviceJoinName: "RGBGenie LED Controller" // RU
-		inClusters:"0x5E,0x72,0x86,0x26,0x33,0x2B,0x2C,0x71,0x70,0x85,0x59,0x73,0x5A,0x55,0x98,0x9F,0x6C,0x7A" 
+		fingerprint mfr:"0330", prod:"0301", model:"A109", deviceJoinName: "RGBGenie Touch Panel" // US
+		//inClusters: "0x5E,0x85,0x59,0x8E,0x55,0x86,0x72,0x5A,0x73,0x98,0x9F,0x6C,0x5B,0x7A", outClusters: "0x26,0x33,0x2B,0x2C"
 
     }
     preferences {
+        input name: "addHubZone1", type: "bool", description: "", title: "Add hubitat to Zone 1", required: true, defaultValue: false
+        input name: "addHubZone2", type: "bool", description: "", title: "Add hubitat to Zone 2", required: true, defaultValue: false
+        input name: "addHubZone3", type: "bool", description: "", title: "Add hubitat to Zone 3", required: true, defaultValue: false
         input name: "associationsZ1", type: "string", description: "", title: "Zone 1 Associations", required: true
         input name: "associationsZ2", type: "string", description: "", title: "Zone 2 Associations", required: true
         input name: "associationsZ3", type: "string", description: "", title: "Zone 3 Associations", required: true
@@ -35,8 +38,6 @@ private getNUMBER_OF_GROUPS() {
 	}
 }
 
-
-
 def initialize() {
     def cmds=[]
     if (parseInt(getDataValue("driverVer")) < 0.001) {
@@ -56,6 +57,19 @@ def updated() {
     def cmds=[]
     cmds+=processAssociations()
     cmds+=pollAssociations()
+    for (int i = 1 ; i <= 3; i++) {
+        if (settings."addHubZone$i") {
+            if (!getChildDevice("${device.deviceNetworkId}-$i")) {
+                addChildDevice("rgbgenie", "RGBGenie Touch Panel Child", "${device.deviceNetworkId}-$i", [completedSetup: true, label: "${device.displayName} (Zone$i)", isComponent: true, componentName: "zone$i", componentLabel: "Zone $i"])
+            }
+            cmds << addHubMultiChannel(i)
+        } else {
+            if (getChildDevice("${device.deviceNetworkId}-$i")) {
+                deleteChildDevice("${device.deviceNetworkId}-$i")
+            }
+            cmds << removeHubMultiChannel(i)
+	    }
+    }
     log.debug "updated cmds: ${cmds}"
     commands(cmds)
 }
@@ -68,7 +82,7 @@ def refresh() {
 }
 
 def installed() {
-    initialize()
+
 }
 
 
@@ -83,6 +97,16 @@ def pollAssociations() {
 
 def configure() {
     initialize()
+}
+
+def zwaveEvent(hubitat.zwave.commands.multichannelv3.MultiChannelCmdEncap cmd) {
+    def encapsulatedCommand = cmd.encapsulatedCommand()
+    if (encapsulatedCommand) {
+        def child=getChildDevice("${device.deviceNetworkId}-${cmd.destinationEndPoint}")
+        if (child) {
+            child.zwaveEvent(encapsulatedCommand)
+	    }
+    }
 }
 
 def zwaveEvent(hubitat.zwave.commands.securityv1.SecurityMessageEncapsulation cmd) {
@@ -136,7 +160,19 @@ def setDefaultAssociation() {
     return cmds
 }
 
+def addHubMultiChannel(zone) {
+    def cmds=[]
+    def group=zone+1
+    cmds << zwave.multiChannelAssociationV2.multiChannelAssociationSet(groupingIdentifier: group, nodeId: [0,zwaveHubNodeId,zone as Integer])
+    return cmds
+}
 
+def removeHubMultiChannel(zone) {
+    def cmds=[]
+    def group=zone+1
+    cmds << zwave.multiChannelAssociationV2.multiChannelAssociationRemove(groupingIdentifier: group, nodeId: [0,zwaveHubNodeId,zone as Integer])
+    return cmds
+}
 
 def processAssociations(){
     def cmds = []
