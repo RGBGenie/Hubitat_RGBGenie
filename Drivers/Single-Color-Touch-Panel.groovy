@@ -1,1 +1,0 @@
-// Single Color Touch Panel Driver 3Z 3S
