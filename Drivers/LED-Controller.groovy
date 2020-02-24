@@ -194,7 +194,7 @@ def installed() {
 
 def parse(description) {
 	if (description != "updated") {
-		def cmd = zwave.parse(description, cmdClassVers)
+		def cmd = zwave.parse(description, CMD_CLASS_VERS)
 		if (cmd) {
 			result = zwaveEvent(cmd)
 			logDebug("${description} parsed to $result")
@@ -378,7 +378,7 @@ def zwaveEvent(hubitat.zwave.commands.hailv1.Hail cmd) {
 }
 
 def zwaveEvent(hubitat.zwave.commands.securityv1.SecurityMessageEncapsulation cmd) {
-	def encapsulatedCommand = cmd.encapsulatedCommand(cmdClassVers)
+	def encapsulatedCommand = cmd.encapsulatedCommand(CMD_CLASS_VERS)
 	if (encapsulatedCommand) {
 		state.sec = 1
 		def result = zwaveEvent(encapsulatedCommand)

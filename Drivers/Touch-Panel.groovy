@@ -33,7 +33,7 @@ metadata {
 }
 
 private getDRIVER_VER() { "0.001" }
-private getCOMMAND_CLASS_VERS() { [] }
+private getCOMMAND_CLASS_VERS() { [0x33:3,0x26:3,0x85:2,0x71:8,0x20:1] }
 private getZONE_MODEL() {
     if (getDataValue("deviceId")!="41222") {
         return true
@@ -134,7 +134,7 @@ def zwaveEvent(hubitat.zwave.commands.multichannelv3.MultiChannelCmdEncap cmd) {
 }
 
 def zwaveEvent(hubitat.zwave.commands.securityv1.SecurityMessageEncapsulation cmd) {
-    def encapsulatedCommand = cmd.encapsulatedCommand(commandClassVersions)
+    def encapsulatedCommand = cmd.encapsulatedCommand(CMD_CLASS_VERS)
     if (encapsulatedCommand) {
         state.sec = 1
         zwaveEvent(encapsulatedCommand)
@@ -146,31 +146,24 @@ def zwaveEvent(hubitat.zwave.Command cmd) {
 }
 
 def parse(description) {
-    def result = null
-    if (description != "updated") {
-        def cmd = zwave.parse(description, commandClassVersions)
-        if (cmd) {
-            result = zwaveEvent(cmd)
-            //if (logEnable) log.debug("'$cmd' parsed to $result")
-        } else {
-            if (logEnable) log.debug "Couldn't zwave.parse '$description'" 
-        }
-    }
-    def now
-    if(location.timeZone)
-    now = new Date().format("yyyy MMM dd EEE h:mm:ss a", location.timeZone)
-    else
-    now = new Date().format("yyyy MMM dd EEE h:mm:ss a")
-    sendEvent(name: "lastActivity", value: now, displayed:false)
-    result
+	if (description != "updated") {
+		def cmd = zwave.parse(description, CMD_CLASS_VERS)
+		if (cmd) {
+			result = zwaveEvent(cmd)
+			logDebug("${description} parsed to $result")
+		} else {
+			logWarn("unable to parse: ${description}")
+		}
+	}
 }
 
+
 private command(hubitat.zwave.Command cmd) {
-    if (state.sec) {
-        zwave.securityV1.securityMessageEncapsulation().encapsulate(cmd).format()
+	if (getDataValue("zwaveSecurePairingComplete") == "true") {
+		return zwave.securityV1.securityMessageEncapsulation().encapsulate(cmd).format()
     } else {
-        cmd.format()
-    }
+		return cmd.format()
+    }	
 }
 
 private commands(commands, delay=200) {
