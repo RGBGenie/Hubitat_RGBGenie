@@ -16,6 +16,7 @@ metadata {
 	}
 
 	preferences {
+		input name: "logEnable", type: "bool", description: "", title: "Enable Debug Logging", defaultValue: true, required: true
 		if (getDataValue("deviceModel")!="41222") {
 			input name: "sceneCapture", type: "bool", description: "", title: "Enable scene capture and activate", defaultValue: false, required: true
 		}
@@ -32,10 +33,18 @@ def updated() {
 	} else if (!sceneCapture && getDataValue("deviceModel")!="41221") {
 		sendEvent(name: "numberOfButtons", value: 3)
 	}
+	if (logEnable) runIn(1800,logsOff)
 }
 
 def installed() {
+	device.updateSetting("logEnable", [value: "true", type: "bool"])
+	runIn(1800,logsOff)
+}
 
+def logsOff() {
+	log.warn "debug logging disabled..."
+	device.updateSetting("logEnable", [value: "false", type: "bool"])
+	if (logEnable) runIn(1800,logsOff)
 }
 
 def defineMe(value) {
@@ -54,12 +63,12 @@ def defineMe(value) {
 }
 
 def parse(description) {
-	log.debug "description"
+	if (logEnable) log.debug "description"
 //	zwaveEvent(cmd)
 }
 
 def zwaveEvent(hubitat.zwave.Command cmd) {
-    log.debug "skip:${cmd}"
+    if (logEnable) log.debug "skip:${cmd}"
 }
 
 def zwaveEvent(hubitat.zwave.commands.basicv1.BasicReport cmd) {
@@ -67,7 +76,7 @@ def zwaveEvent(hubitat.zwave.commands.basicv1.BasicReport cmd) {
 }
 
 def zwaveEvent(hubitat.zwave.commands.basicv1.BasicSet cmd) {
-	log.debug "basic set: ${cmd}"
+	if (logEnable) log.debug "basic set: ${cmd}"
 	dimmerEvents(cmd)
 }
 
@@ -79,7 +88,7 @@ def zwaveEvent(hubitat.zwave.commands.switchmultilevelv3.SwitchMultilevelReport 
 
 
 def zwaveEvent(hubitat.zwave.commands.switchcolorv3.SwitchColorSet cmd) {
-	log.debug "got SwitchColorReport: $cmd"
+	if (logEnable) log.debug "got SwitchColorReport: $cmd"
 	def colorComponents=cmd.colorComponents
 	def warmWhite=null
 	def coldWhite=null
@@ -87,7 +96,7 @@ def zwaveEvent(hubitat.zwave.commands.switchcolorv3.SwitchColorSet cmd) {
 	def green=0
 	def blue=0
     colorComponents.each { k, v ->
-        log.debug "color component: $k : $v"
+        if (logEnable) log.debug "color component: $k : $v"
 		switch (k) {
 			case 0:
 				warmWhite=v
@@ -215,7 +224,7 @@ def zwaveEvent(hubitat.zwave.commands.securityv1.SecurityMessageEncapsulation cm
 
 
 def zwaveEvent(hubitat.zwave.commands.switchcolorv3.SwitchColorSupportedReport cmd) {
-	log.debug cmd
+	if (logEnable) log.debug cmd
 }
 
 def buildOffOnEvent(cmd){

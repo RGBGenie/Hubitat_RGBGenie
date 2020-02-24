@@ -27,6 +27,7 @@ metadata {
             input name: "associationsZ3", type: "string", description: "", title: "Zone 3 Associations", required: true
         }
 		input description: "To add nodes to zone associations use the Hexidecimal nodeID from the z-wave device list separated by commas", title: "Direct Association", displayDuringSetup: false, type: "paragraph", element: "paragraph"
+        input name: "logEnable", type: "bool", description: "", title: "Enable Debug Logging", defaultValue: true, required: true
 	}
 }
 
@@ -63,6 +64,12 @@ def initialize() {
     commands(cmds)
 }
 
+def logsOff() {
+	log.warn "debug logging disabled..."
+	device.updateSetting("logEnable", [value: "false", type: "bool"])
+	if (logEnable) runIn(1800,logsOff)
+}
+
 def updated() {
     def cmds=[]
     cmds+=processAssociations()
@@ -83,7 +90,8 @@ def updated() {
             cmds << removeHubMultiChannel(i)
 	    }
     }
-    log.debug "updated cmds: ${cmds}"
+    if (logEnable) log.debug "updated cmds: ${cmds}"
+   	if (logEnable) runIn(1800,logsOff)
     commands(cmds)
 }
 
@@ -95,6 +103,8 @@ def refresh() {
 }
 
 def installed() {
+	device.updateSetting("logEnable", [value: "true", type: "bool"])
+	runIn(1800,logsOff)
     initialize()
 }
 
@@ -105,7 +115,7 @@ def pollAssociations() {
     for(int i = 1;i<=NUMBER_OF_GROUPS;i++) {
         cmds << zwave.associationV2.associationGet(groupingIdentifier:i)
     }
-    log.debug "pollAssociations cmds: ${cmds}"
+    if (logEnable) log.debug "pollAssociations cmds: ${cmds}"
     return cmds
 }
 
@@ -132,7 +142,7 @@ def zwaveEvent(hubitat.zwave.commands.securityv1.SecurityMessageEncapsulation cm
 }
 
 def zwaveEvent(hubitat.zwave.Command cmd) {
-    log.debug "skip:${cmd}"
+    if (logEnable) log.debug "skip:${cmd}"
 }
 
 def parse(description) {
@@ -141,9 +151,9 @@ def parse(description) {
         def cmd = zwave.parse(description, commandClassVersions)
         if (cmd) {
             result = zwaveEvent(cmd)
-            //log.debug("'$cmd' parsed to $result")
+            //if (logEnable) log.debug("'$cmd' parsed to $result")
         } else {
-            log.debug "Couldn't zwave.parse '$description'" 
+            if (logEnable) log.debug "Couldn't zwave.parse '$description'" 
         }
     }
     def now
@@ -194,7 +204,7 @@ def processAssociations(){
         def associationGroups = NUMBER_OF_GROUPS
         for (int i = 2 ; i <= associationGroups; i++) {
             def z=i-1
-            log.debug "group: $i dataValue: " + getDataValue("zwaveAssociationG$i") + " parameterValue: " + settings."associationsZ$z"
+            if (logEnable) log.debug "group: $i dataValue: " + getDataValue("zwaveAssociationG$i") + " parameterValue: " + settings."associationsZ$z"
             def parameterInput=settings."associationsZ$z"
             def newNodeList = []
             def oldNodeList = []
@@ -213,11 +223,11 @@ def processAssociations(){
 				}
             }
             if (oldNodeList.size > 0 || newNodeList.size > 0) {
-                log.debug "${oldNodeList.size} - ${newNodeList.size}"
+                if (logEnable) log.debug "${oldNodeList.size} - ${newNodeList.size}"
                 oldNodeList.each {
                     if (!newNodeList.contains(it)) {
                         // user removed a node from the list
-                        log.debug "removing node: $it, from group: $i"
+                        if (logEnable) log.debug "removing node: $it, from group: $i"
                         cmds << zwave.associationV2.associationRemove(groupingIdentifier:i, nodeId:Integer.parseInt(it,16))
 					}        
 				}
@@ -226,12 +236,12 @@ def processAssociations(){
 				}                            
 			}
        }
-    log.debug "processAssociations cmds: ${cmds}"
+    if (logEnable) log.debug "processAssociations cmds: ${cmds}"
     return cmds
 }
 
 def zwaveEvent(hubitat.zwave.commands.associationv2.AssociationReport cmd) {
-    log.debug "${device.label?device.label:device.name}: ${cmd}"
+    if (logEnable) log.debug "${device.label?device.label:device.name}: ${cmd}"
     def temp = []
     if (cmd.nodeId != []) {
        cmd.nodeId.each {
@@ -239,7 +249,7 @@ def zwaveEvent(hubitat.zwave.commands.associationv2.AssociationReport cmd) {
        }
     }
     def zone=cmd.groupingIdentifier-1
-    log.debug "${cmd.groupingIdentifier} - $zone - $temp"
+    if (logEnable) log.debug "${cmd.groupingIdentifier} - $zone - $temp"
     if (zone > 0) {
         device.updateSetting("associationsZ$zone",[value: "${temp.toString().minus("[").minus("]")}", type: "string"])
     }
@@ -247,9 +257,9 @@ def zwaveEvent(hubitat.zwave.commands.associationv2.AssociationReport cmd) {
 }
 
 def zwaveEvent(hubitat.zwave.commands.associationv2.AssociationGroupingsReport cmd) {
-    if (debugEnable) log.debug "${device.label?device.label:device.name}: ${cmd}"
+    if (logEnable) log.debug "${device.label?device.label:device.name}: ${cmd}"
     sendEvent(name: "groups", value: cmd.supportedGroupings)
-    if (infoEnable) log.info "${device.label?device.label:device.name}: Supported association groups: ${cmd.supportedGroupings}"
+    log.info "${device.label?device.label:device.name}: Supported association groups: ${cmd.supportedGroupings}"
     state.associationGroups = cmd.supportedGroupings
 }
 
