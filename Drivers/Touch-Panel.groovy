@@ -51,16 +51,7 @@ private getNUMBER_OF_GROUPS() {
 
 def initialize() {
     def cmds=[]
-
-    if (getDataValue("driverVer") != "0.001") {
-        updateDataValue("zwaveAssociationG1", "")
-        updateDataValue("zwaveAssociationG2", "")
-        updateDataValue("zwaveAssociationG3", "")
-        updateDataValue("zwaveAssociationG4", "")
-        //cmds << zwave.associationV2.associationSet(groupingIdentifier: 1, nodeId: zwaveHubNodeId)
-	}
     cmds+=pollAssociations()
-    updateDataValue("driverVer", DRIVER_VER)
     commands(cmds)
 }
 
@@ -72,24 +63,24 @@ def logsOff() {
 
 def updated() {
     def cmds=[]
-    cmds+=processAssociations()
-    cmds+=pollAssociations()
     for (int i = 1 ; i <= 3; i++) {
         if (settings."addHubZone$i") {
             if (!getChildDevice("${device.deviceNetworkId}-$i")) {
                 def child=addChildDevice("rgbgenie", "RGBGenie Touch Panel Child", "${device.deviceNetworkId}-$i", [completedSetup: true, label: "${device.displayName} (Zone$i)", isComponent: true, componentName: "zone$i", componentLabel: "Zone $i"])
                 if (child) {
-                    child.defineMe(getDataValue("deviceId"))           
+                    child.defineMe(getDataValue("deviceId"))   
+                    cmds << addHubMultiChannel(i)
 				}        
-            }
-            cmds << addHubMultiChannel(i)
+            }          
         } else {
             if (getChildDevice("${device.deviceNetworkId}-$i")) {
                 deleteChildDevice("${device.deviceNetworkId}-$i")
+                cmds << removeHubMultiChannel(i)
             }
-            cmds << removeHubMultiChannel(i)
 	    }
     }
+    cmds+=processAssociations()
+    cmds+=pollAssociations()
     if (logEnable) log.debug "updated cmds: ${cmds}"
    	if (logEnable) runIn(1800,logsOff)
     commands(cmds)
