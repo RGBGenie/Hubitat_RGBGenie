@@ -1,20 +1,33 @@
+/* 
+*    - Added clamp(value, lowerBound (default 0), upperBound (default 100)) method
+*    - Updated color method for unincluded parameters and removed extra parameters from setHue/setSaturation
+*    - Added hue 360º option for users with 0-100 default hues and hueMode setting
+*    - Added deviceType 1 settings section
+*    - Updated logLevel defaults and removing log.debugs
+*    - Updated colorPrestage method for setColor
+*    - Adding comments to methods (left off here)
+*
+*    ******************
+*     Add license here
+*    ******************
+*/
 
 import hubitat.helper.ColorUtils
 
 metadata {
 	definition (name: "RGBGenie LED Controller", namespace: "rgbgenie", author: "Bryan Copeland") {
-		capability "SwitchLevel"
-		capability "ColorControl"
-		capability "ChangeLevel"
-		capability "ColorTemperature"
-		capability "ColorMode"
-		capability "Configuration"
-		capability "Switch"
-		capability "Refresh"
 		capability "Actuator"
-		capability "Sensor"
+		capability "ChangeLevel"
+		capability "ColorControl"
+		capability "ColorMode"
+		capability "ColorTemperature"
+		capability "Configuration"
 		capability "HealthCheck"
 		capability "LightEffects"
+		capability "Refresh"
+		capability "Sensor"
+		capability "Switch"
+		capability "SwitchLevel"
 
 		attribute "colorMode", "string"
 		attribute "lightEffects", "JSON_OBJECT"
@@ -34,18 +47,30 @@ metadata {
 	preferences {
 		
 		input "logLevel", "enum", title: "Logging Level", options: [1: "Error", 2: "Warn", 3: "Info", 4: "Debug", 5: "Trace"], required: false
-		
+
 		if (getDataValue("deviceModel")=="" || getDataValue("deviceModel")==null) {
 			input description: "The device type has not been detected.. Please press the configure button", title: "Device Type Detection", displayDuringSetup: false, type: "paragraph", element: "paragraph"
 		} else {
 			input name: "dimmerSpeed", type: "number", description: "", title: "Dimmer Ramp Rate 0-255", defaultValue: 0, required: true
 			input name: "loadStateSave", type: "enum", description: "", title: "Power fail load state restore", defaultValue: 0, required: true, options: [0: "Shut Off Load", 1: "Turn On Load", 2: "Restore Last State"]
 			input name: "deviceType", type: "enum", description: "", title: "Change Device Type", defaultValue: getDataValue("deviceModel"), required: false, options: [0: "Single Color", 1: "CCT", 2: "RGBW"]
+			
+			if (getDataValue("deviceModel") == "1") {
+				// Color Model-specific settings
+
+				// Since technically you can use either ... best to convert 0-100 Hues to 0-360
+				input name: "hueMode", type: "bool", description: "", title: "Send hue in 0-100 (off) or 0-360 (on)", defaultValue: false, required: true
+			}
+
 			if (getDataValue("deviceModel") == "1" || getDataValue("deviceModel")=="2") {
+				// Color, or Color Temperature Model-specific settings
+
 				input name: "colorPrestage", type: "bool", description: "", title: "Enable Color Prestaging", defaultValue: false, required: true
 				input name: "colorDuration", type: "number", description: "", title: "Color Transition Duration", defaultValue: 3, required: true			
 			}
 			if (getDataValue("deviceModel")=="2") {
+				// Color Temperature Model-specific settings
+
 				input name: "wwComponent", type: "bool", description: "", title: "Enable Warm White Component", defaultValue: true, required: true
 				input name: "wwKelvin", type: "number", description: "", title: "Warm White Temperature", defaultValue: 2700, required: true
 			}
@@ -113,7 +138,7 @@ def logsOff(){
 }
 
 def interrogate() {
-	log.debug "Querying for device type"
+	logDebug "Querying for device type"
 	def cmds = []
 	cmds << zwave.configurationV2.configurationGet([parameterNumber: 4])
 	cmds << zwave.associationV2.associationGet(groupingIdentifier:1)
@@ -121,10 +146,10 @@ def interrogate() {
 }
 
 def updated() {
-	log.debug "updated().."
+	logDebug "updated().."
 	log.info "Logging level is ${logLevel}"
 	def cmds = [] 
-    log.debug "deviceModel: "+getDataValue("deviceModel") + " Updated setting: ${deviceType}"
+    logDebug "deviceModel: "+getDataValue("deviceModel") + " Updated setting: ${deviceType}"
 	if (getDataValue("deviceModel") != deviceType.toString()) {
 		cmds << zwave.configurationV2.configurationSet([parameterNumber: 4, size: 1, scaledConfigurationValue: deviceType.toInteger()])
 		cmds << zwave.configurationV2.configurationGet([parameterNumber: 4])
@@ -132,7 +157,7 @@ def updated() {
 	cmds << zwave.configurationV2.configurationSet([parameterNumber: 2, size: 1, scaledConfigurationValue: loadStateSave])
 	cmds << zwave.configurationV2.configurationSet([parameterNumber: 6, size: 1, configurationValue: [stageModeSpeed as Integer]])
 	cmds << zwave.configurationV2.configurationSet([parameterNumber: 8, size: 1, scaledConfigurationValue: hueToHueByte(stageModeHue)])
-    log.debug "commands: ${cmds}"
+    logDebug "commands: ${cmds}"
 	commands(cmds)
 }
 
@@ -157,7 +182,7 @@ private initializeVars() {
 }
 
 def installed() {
-	log.debug "installed()..."
+	log.info "installed()..."
 	def cmds = []
     cmds << zwave.associationV2.associationGet(groupingIdentifier:1)
     cmds << zwave.configurationV2.configurationGet([parameterNumber: 4])
@@ -171,26 +196,26 @@ def parse(description) {
 			result = zwaveEvent(cmd)
 			logDebug("${description} parsed to $result")
 		} else {
-			log.warn("unable to parse: ${description}")
+			logWarn("unable to parse: ${description}")
 		}
 	}
 }
 
 
 def zwaveEvent(hubitat.zwave.commands.associationv2.AssociationGroupingsReport cmd) {
-    log.debug "Supported association groups: ${cmd.supportedGroupings}"
+    logDebug "Supported association groups: ${cmd.supportedGroupings}"
 }
 
 def zwaveEvent(hubitat.zwave.commands.associationgrpinfov3.AssociationGroupCommandListReport cmd) {
-	log.debug "association group command list report: ${cmd}"
+	logDebug "association group command list report: ${cmd}"
 }
 
 def zwaveEvent(hubitat.zwave.commands.associationgrpinfov3.AssociationGroupInfoReport cmd) {
-	log.debug "association group info report"
+	logDebug "association group info report"
 }
 
 def zwaveEvent(hubitat.zwave.commands.associationcommandconfigurationv1.CommandRecordsSupportedReport cmd) {
-	log.debug "association command config supported: ${cmd}"
+	logDebug "association command config supported: ${cmd}"
 }
 
 def zwaveEvent(hubitat.zwave.commands.associationv2.AssociationReport cmd) {
@@ -203,7 +228,7 @@ def zwaveEvent(hubitat.zwave.commands.associationv2.AssociationReport cmd) {
 }
 
 def zwaveEvent(hubitat.zwave.commands.configurationv2.ConfigurationReport cmd) {
-	log.debug "got ConfigurationReport: $cmd"
+	logDebug "got ConfigurationReport: $cmd"
 	switch (cmd.parameterNumber) {
 		case 4:
 			device.updateDataValue("deviceModel", "${cmd.scaledConfigurationValue}")
@@ -247,7 +272,7 @@ def zwaveEvent(hubitat.zwave.commands.configurationv2.ConfigurationReport cmd) {
 }
 
 def setEffect(effectNumber) {
-	log.debug "Got setEffect " + effectNumber
+	logDebug "Got setEffect " + effectNumber
 	def cmds=[]
 	cmds << zwave.configurationV2.configurationSet([parameterNumber: 5, size: 1, scaledConfigurationValue: effectNumber])
 	cmds << zwave.configurationV2.configurationGet([parameterNumber: 5])
@@ -279,7 +304,7 @@ def zwaveEvent(hubitat.zwave.commands.switchmultilevelv3.SwitchMultilevelReport 
 }
 
 def zwaveEvent(hubitat.zwave.commands.switchcolorv3.SwitchColorReport cmd) {
-	log.debug "got SwitchColorReport: $cmd"
+	logDebug "got SwitchColorReport: $cmd"
 	if (!state.colorReceived) state.colorReceived = ["red": null, "green": null, "blue": null, "warmWhite": null, "coldWhite": null]
 	state.colorReceived[cmd.colorComponent] = cmd.targetValue
 	switch (getDataValue("deviceModel")) {
@@ -366,21 +391,21 @@ def zwaveEvent(hubitat.zwave.commands.securityv1.SecurityMessageEncapsulation cm
 }
 
 def zwaveEvent(hubitat.zwave.commands.notificationv8.NotificationReport cmd) {
-	log.debug "Notification received: ${cmd}"
+	logDebug "Notification received: ${cmd}"
 	if (cmd.notificationType == 9) {
 		if (cmd.event == 7) {
-			log.warn "Emergency shutoff load malfunction"
+			logWarn "Emergency shutoff load malfunction"
 		}
 	}
 }
 
 
 def zwaveEvent(hubitat.zwave.Command cmd) {
-    log.debug "skip:${cmd}"
+    logDebug "skip:${cmd}"
 }
 
 def zwaveEvent(hubitat.zwave.commands.switchcolorv3.SwitchColorSupportedReport cmd) {
-	log.debug cmd
+	logDebug cmd
 }
 
 def buildOffOnEvent(cmd){
@@ -388,14 +413,20 @@ def buildOffOnEvent(cmd){
 }
 
 def on() {
+	// Turns on a device
+
 	commands(buildOffOnEvent(0xFF), 3500)
 }
 
 def off() {
+	// Turns off a device 
+
 	commands(buildOffOnEvent(0x00), 3500)
 }
 
 def refresh() {
+	// Queries a device for changes 
+
 	def cmds=[]
 	cmds << zwave.switchMultilevelV3.switchMultilevelGet()
 	cmds << zwave.configurationV2.configurationGet([parameterNumber: 5])
@@ -403,7 +434,9 @@ def refresh() {
 }
 
 def ping() {
-	log.debug "ping().."
+	// Calls refresh() to query changes
+
+	logDebug "ping().."
 	refresh()
 }
 
@@ -418,66 +451,97 @@ def stopLevelChange() {
 }
 
 def setLevel(level) {
-	setLevel(level, dimmerSpeed)
+	// Sets the level of a device (with default dimmer speed)
+
+	setLevel(level, settings.dimmerSpeed)
 }
 
-def setLevel(level, duration) {
-	log.debug "setLevel($level, $duration)"
-	if(level > 99) level = 99
+def setLevel(level, duration = settings.dimmerSpeed) {
+	// Sets the Level (brightness) of a device (0-99) over a duration (0-???) of (MS?)
+
+	logDebug "setLevel($level, $duration)"
+	
+	level = clamp(level, 0, 99)
+
 	commands([
 		zwave.switchMultilevelV3.switchMultilevelSet(value: level, dimmingDuration: duration)
 	])
 }
 
 def setSaturation(percent) {
-	log.debug "setSaturation($percent)"
-	setColor(hue: device.currentValue("hue"), saturation: percent)
+	// Sets the Saturation of a device (0-100)
+
+	percent = clamp(percent)
+	logDebug "setSaturation($percent)"
+	setColor(saturation: percent)
 }
 
 def setHue(value) {
-	log.debug "setHue($value)"
-	setColor(hue: value, saturation: device.currentValue("saturation"))
+	// Sets the Hue of a device (0-360) < Add setting for this
+
+	value = clamp(value, 0, 360)
+	logDebug "setHue($value)"
+	setColor(hue: value)
 }
 
 def setColor(value) {
+	// Sets the color of a device from HSL
+
 	state.colorReceived = ["red": null, "green": null, "blue": null, "warmWhite": null, "coldWhite": null]
+	def setValue = [:]
 	def duration=colorDuration?colorDuration:3
-	log.debug "setColor($value)"
+
+	logDebug "setColor($value)"
+
 	if (state.deviceType==2) {
-		if (value.hue == null || value.saturation == null) return
-		if (value.level == null) value.level=100
-		logDebug "setColor($value)"
+		setValue.hue = value.hue == null ? device.currentValue("hue") : clamp((settings.hueMode == true ? value.hue * 3.6 : value.hue), 0, 360)
+		setValue.saturation = value.saturation == null ? device.currentValue("saturation") : clamp(value.saturation)
+		setValue.level = value.level == null ? device.currentValue("level") : clamp(value.level)
+		logDebug "setColor updated values to $setValue."
+		
+		// Device HSL values get updated with parse()
+
 		def result = []
-		def rgb = ColorUtils.hsvToRGB([value.hue, value.saturation, value.level])
-		log.debug "r:" + rgb[0] + ", g: " + rgb[1] +", b: " + rgb[2]
+		def rgb = ColorUtils.hsvToRGB([setValue.hue, setValue.saturation, setValue.level])
+		
+		logDebug "HSL Converted to R:${rgb[0]} G:${rgb[1]} B:${rgb[2]}"
+		
 		result << zwave.switchColorV3.switchColorSet(red: rgb[0], green: rgb[1], blue: rgb[2], warmWhite:0, dimmingDuration: duration)
-		//if ((device.currentValue("switch") != "on") && (!colorStaging)){
-		logDebug "Bulb is off. Turning on"
+		
+		if ((device.currentValue("switch") != "on") && !colorPrestage) {
+			logDebug "Turning device on with pre-staging"
  			result << zwave.basicV1.basicSet(value: 0xFF)
 			result << zwave.switchMultilevelV3.switchMultilevelGet()
-		//}
+		}
+
 		result+=queryAllColors()
-		log.debug "commands: ${result}"
+
+		logDebug "commands: ${result}"
+
 		sendEvent(name: "colorMode", value: "RGB")
 		commands(result)
 	} else {
-		log.trace "setColor not supported on this device type"
+		logTrace "setColor not supported on this device type"
 	}
 }
 
 
 def setColorTemperature(temp) {
+	// Sets the colorTemperature of a device
+
+	temp = clamp(temp, 1000, 12000)
+
 	state.colorReceived = ["red": null, "green": null, "blue": null, "warmWhite": null, "coldWhite": null]
 	def duration=colorDuration?colorDuration:3
 	def warmWhite=0
 	def coldWhite=0
 	if(temp > COLOR_TEMP_MAX) temp = COLOR_TEMP_MAX
 	def result = []
-	log.debug "setColorTemperature($temp)"
+	logDebug "setColorTemperature($temp)"
 	switch (getDataValue("deviceModel")) {
 		case "0": 
 			// Single Color Device Type
-			log.trace "setColorTemperature not supported on this device type"
+			logTrace "setColorTemperature not supported on this device type"
 			return
 		break
 		case "1":
@@ -503,18 +567,19 @@ def setColorTemperature(temp) {
 				if(temp < COLOR_TEMP_MIN) temp = COLOR_TEMP_MIN
 				def rgbTemp = ctToRgb(temp)
 				state.ctTarget=temp
-				log.debug "r: " + rgbTemp["r"] + " g: " + rgbTemp["g"] + " b: "+ rgbTemp["b"]
-				log.debug "r: " + gammaCorrect(rgbTemp["r"]) + " g: " + gammaCorrect(rgbTemp["g"]) + " b: " + gammaCorrect(rgbTemp["b"])
+				logDebug "r: " + rgbTemp["r"] + " g: " + rgbTemp["g"] + " b: "+ rgbTemp["b"]
+				logDebug "r: " + gammaCorrect(rgbTemp["r"]) + " g: " + gammaCorrect(rgbTemp["g"]) + " b: " + gammaCorrect(rgbTemp["b"])
 				result << zwave.switchColorV3.switchColorSet(red: gammaCorrect(rgbTemp["r"]), green: gammaCorrect(rgbTemp["g"]), blue: gammaCorrect(rgbTemp["b"]), warmWhite: 0, dimmingDuration: duration)
 			}
 		break
 	}
 	if ((device.currentValue("switch") != "on") && !colorPrestage) {
-		result << zwave.basicV1.basicSet(value: 0xFF)
-		result << zwave.switchMultilevelV3.switchMultilevelGet()
+			logDebug "Turning device on with pre-staging"
+ 			result << zwave.basicV1.basicSet(value: 0xFF)
+			result << zwave.switchMultilevelV3.switchMultilevelGet()
 	}
 	result+=queryAllColors()
-	log.debug result
+	logDebug result
 	sendEvent(name: "colorMode", value: "CT")
 	commands(result)
 }
@@ -657,6 +722,23 @@ def logDebug(msg) {
 
 def logTrace(msg) {
   if (logLevel?.toInteger() >= 5) { log.trace msg }
+}
+
+def clamp( value, lowerBound = 0, upperBound = 100 ){
+    // Takes a value and ensures it's between two defined thresholds
+
+    value == null ? value = upperBound : null
+
+    if(lowerBound < upperBound){
+        if(value < lowerBound ){ value = lowerBound}
+        if(value > upperBound){ value = upperBound}
+    }
+    else if(upperBound < lowerBound){
+        if(value < upperBound){ value = upperBound}
+        if(value > lowerBound ){ value = lowerBound}
+    }
+
+    return value
 }
 
 def rgbToCt(Float r, Float g, Float b) {
