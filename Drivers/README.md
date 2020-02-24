@@ -1,15 +1,20 @@
 # Hubitat RGBGenie Drivers
 
+Thank you for choosing RGBGenie for your lighting solution! Here you will find the drivers needed to utilize the full functionality of your devices.
+
+
+# LED Controllers 
+
 All LED controllers work through the LED-Controller.groovy driver 
 
 
 # Touch Panels
-All touch panels work with the Touch-Panel.groovy and Touch-Panel-Child.groovy drivers
 
-A child driver can be loaded for each zone on the multi zone models, the Scene only models are 1 Zone.
+A child driver can be loaded for each zone on the multi zone models, the Scene only models are 1 Zone.<br>
 This child drivers can be used with the Hubitat built-in mirror application to syncronize the output of the touch panel to groups of devices of any type ex: Z-Wave Zigbee WiFi. 
 Optionally the child drivers can utilize the Scene buttons as button controllers or scene capture / activate. With the button controller functionality on a 3 scene / 3 zone touch panel you would end up with 9 buttons that can be pushed or held to have actions mapped to any functionality in hubitat.
 
+# Device / Driver List
 <table>
 <tr><th>Model</th><th>Description</td><th>Driver</th></tr>
 <tr><td>ZV-1008</td><td>RGBW LED Controller with built-in power supply</td><td>LED-Controller.groovy</td></tr>
