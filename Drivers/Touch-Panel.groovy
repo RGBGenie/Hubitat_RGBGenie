@@ -22,12 +22,12 @@ metadata {
             input name: "addHubZone2", type: "bool", description: "", title: "Create child driver for Zone 2", required: true, defaultValue: false
             input name: "addHubZone3", type: "bool", description: "", title: "Create child driver for Zone 3", required: true, defaultValue: false
         }
-        input name: "associationsZ1", type: "string", description: "", title: "Zone 1 Associations", required: true
+        input name: "associationsZ1", type: "string", description: "Direct zwave associations", title: "Zone 1 Associations", required: true
         if (getDataValue("deviceId")!="41222") {
             input name: "associationsZ2", type: "string", description: "", title: "Zone 2 Associations", required: true
             input name: "associationsZ3", type: "string", description: "", title: "Zone 3 Associations", required: true
         }
-		input description: "To add nodes to zone associations use the Hexidecimal nodeID from the z-wave device list separated by commas", title: "Direct Association", displayDuringSetup: false, type: "paragraph", element: "paragraph"
+		input description: "To add nodes to zone associations use the Hexidecimal nodeID from the z-wave device list separated by commas.", title: "Direct Association", displayDuringSetup: false, type: "paragraph", element: "paragraph"
         input name: "logEnable", type: "bool", description: "", title: "Enable Debug Logging", defaultValue: true, required: true
 	}
 }
