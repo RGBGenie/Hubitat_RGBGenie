@@ -25,7 +25,7 @@ The touch panels support any combination of child drivers and direct z-wave asso
 <table>
 <tr><th>Model</th><th>Description</th><th>Driver(s)</th></tr>
 <tr><td>ZV-1008</td><td>RGBW LED Controller with built-in power supply</td>		<td>LED-Controller.groovy</td></tr>
-<tr><td>ZW-1000</td><td>CCT LED Controller</td>									<td>LED-Controller.groovy</td><tr>
+<tr><td>ZW-1000</td><td>CCT LED Controller</td>									<td>LED-Controller.groovy</td></tr>
 <tr><td>ZW-1001</td><td>Single Color LED Controller</td>						<td>LED-Controller.groovy</td></tr>
 <tr><td>ZW-1002</td><td>RGBW LED Controller</td>								<td>LED-Controller.groovy</td></tr>
 <tr><td>ZW-3001</td><td>3 Zone / 3 Scene Single Color Touch Panel White</td>	<td>Touch-Panel.groovy / Touch-Panel-Child.groovy</td></tr>
