@@ -82,8 +82,9 @@ def refresh() {
 }
 
 def installed() {
-
+    initialize()
 }
+
 
 
 def pollAssociations() {

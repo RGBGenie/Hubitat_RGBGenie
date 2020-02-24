@@ -4,21 +4,47 @@ import hubitat.helper.ColorUtils
 metadata {
 	definition (name: "RGBGenie Touch Panel Child", namespace: "rgbgenie", author: "Bryan Copeland") {
 		capability "SwitchLevel"
+		capability "PushableButton"
+		capability "HoldableButton"
 		capability "ColorControl"
 		capability "ChangeLevel"
+		capability "ColorMode"
 		capability "ColorTemperature"
 		capability "Switch"
 		capability "Actuator"
 		attribute "colorMode", "string"
-
 	}
+
+	preferences {
+		if (getDataValue("deviceModel")!="1") {
+			input name: "sceneCapture", type: "bool", description: "", title: "Enable scene capture and activate", defaultValue: false, required: true
+		}
+	}
+
 }
 private getCOLOR_TEMP_MIN() { 2700 }
 private getCOLOR_TEMP_MAX() { 6500 }
 private getCOLOR_TEMP_DIFF() { COLOR_TEMP_MAX - COLOR_TEMP_MIN }
 
+def updated() {
+	if (sceneCapture && getDataValue("deviceModel")!="1") { 
+		sendEvent(name: "numberOfButtons", value: 0) 
+	} else if (!sceneCapture && getDataValue("deviceModel")!="1") {
+		sendEvent(name: "numberOfButtons", value: 3)
+	}
+}
+
 def installed() {
 
+}
+
+def defineMe(value) {
+	device.updateDataValue("deviceModel", "$value")
+	if (value==1) { 
+		sendEvent(name: "numberOfButtons", value: 0)
+	} else {
+		sendEvent(name: "numberOfButtons", value: 3)
+	}
 }
 
 def parse(description) {
@@ -85,14 +111,17 @@ def zwaveEvent(hubitat.zwave.commands.switchcolorv3.SwitchColorSet cmd) {
 		if (sat != device.currentValue("saturation")) { 
 			sendEvent(name:"saturation", value:Math.round(sat), unit:"%")
 		}
+		sendEvent(name:"colorMode", value:"RGB")
 	} else if (warmWhite != null && coldWhite != null) {
+		sendEvent(name:"colorMode", value:"CT")
 		def colorTemp = COLOR_TEMP_MIN + (COLOR_TEMP_DIFF / 2)
 		if (warmWhite != coldWhite) {
 			colorTemp = (COLOR_TEMP_MAX - (COLOR_TEMP_DIFF * warmWhite) / 255) as Integer
 		}
-		sendEvent(name: "colorTemperature", value: colorTemp)	
+		sendEvent(name:"colorTemperature", value: colorTemp)	
 	} else if (warmWhite != null) {
-		sendEvent(name: "colorTemperature", value: 2700)
+		sendEvent(name:"colorMode", value:"CT")
+		sendEvent(name:"colorTemperature", value: 2700)
 	}
 }
 
@@ -133,6 +162,31 @@ private dimmerEvents(hubitat.zwave.Command cmd) {
 	if (cmd.value) {
 		if (cmd.value>100) cmd.value=100
 		sendEvent(name: "level", value: cmd.value == 99 ? 100 : cmd.value , unit: "%")
+	}
+}
+
+def zwaveEvent(hubitat.zwave.commands.sceneactuatorconfv1.SceneActuatorConfSet cmd) {
+	if (sceneCapture) {
+		if (!state.scene) { state.scene=[:] }
+		if(device.currentValue("colorMode")=="RGB") {
+			state.scene["${cmd.sceneId}"]=["hue": device.currentValue("hue"), "saturation": device.currentValue("saturation"), "level": device.currentValue("level"), "colorMode": device.currentValue("colorMode"), "switch": device.currentValue("switch")]
+		} else {
+			state.scene["${cmd.sceneId}"]=["colorTemperature": device.currentValue("colorTemperature"), "level": device.currentValue("level"), "switch": device.currentValue("switch"), "colorMode": device.currentValue("colorMode")]
+		}
+	} else {
+		sendEvent(name: "pushed", value: (cmd.sceneId/16))
+	}
+}
+
+def zwaveEvent(hubitat.zwave.commands.sceneactivationv1.SceneActivationSet cmd) {
+	if (sceneCapture) {
+		if (!state.scene) { state.scene=[:] }
+		def scene=state.scene["${cmd.sceneId}"] 
+		scene.each { k, v ->
+			sendEvent(name: k, value: v)
+		}
+	} else {
+		sendEvent(name: "held", value: (cmd.sceneId/16))
 	}
 }
 
