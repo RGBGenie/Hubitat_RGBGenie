@@ -5,7 +5,7 @@ Thank you for choosing RGBGenie for your lighting solution! Here you will find t
 
 # LED Controllers 
 
-All LED controllers work through the LED-Controller.groovy driver <br>
+All Z-Wave LED controllers work through the Zwave-LED-Controller.groovy driver <br>
 The LED controller driver allows you to change the type of device so you are not limited by the original model purchase. You can swap between CCT, Single Color, and RGBW models, and it will change the device's functionality at a firmware level.<br><br>
 RGBW Models:<br>
 You can optionally enable / disable the WarmWhite component so if you are using RGB only LED strips you won't get signals sent to the WarmWhite output mistakenly. <br>
@@ -24,16 +24,16 @@ The touch panels support any combination of child drivers and direct z-wave asso
 # Device / Driver List
 <table>
 <tr><th>Model</th><th>Description</th><th>Driver(s)</th></tr>
-<tr><td>ZV-1008</td><td>RGBW LED Controller with built-in power supply</td>		<td>LED-Controller.groovy</td></tr>
-<tr><td>ZW-1000</td><td>CCT LED Controller</td>									<td>LED-Controller.groovy</td></tr>
-<tr><td>ZW-1001</td><td>Single Color LED Controller</td>						<td>LED-Controller.groovy</td></tr>
-<tr><td>ZW-1002</td><td>RGBW LED Controller</td>								<td>LED-Controller.groovy</td></tr>
-<tr><td>ZW-3001</td><td>3 Zone / 3 Scene Single Color Touch Panel White</td>	<td>Touch-Panel.groovy / Touch-Panel-Child.groovy</td></tr>
-<tr><td>ZW-3002</td><td>3 Scene Color Touch Panel White</td>					<td>Touch-Panel.groovy / Touch-Panel-Child.groovy</td></tr>
-<tr><td>ZW-3003</td><td>3 Scene Color Touch Panel Black</td>					<td>Touch-Panel.groovy / Touch-Panel-Child.groovy</td></tr>
-<tr><td>ZW-3004</td><td>3 Zone Color Touch Panel White</td>						<td>Touch-Panel.groovy / Touch-Panel-Child.groovy</td></tr>
-<tr><td>ZW-3005</td><td>3 Zone Color Touch Panel Black</td>						<td>Touch-Panel.groovy / Touch-Panel-Child.groovy</td></tr>
-<tr><td>ZW-3011</td><td>3 Zone / 3 Scene CCT Color Touch Panel White</td>		<td>Touch-Panel.groovy / Touch-Panel-Child.groovy</td></tr>
-<tr><td>ZW-4001</td><td>Micro Controller and Lamp Module</td>					<td>Micro-Controller.groovy</td></tr>
+<tr><td>ZV-1008</td><td>RGBW LED Controller with built-in power supply</td>		<td>Zwave-LED-Controller.groovy</td></tr>
+<tr><td>ZW-1000</td><td>CCT LED Controller</td>									<td>Zwave-LED-Controller.groovy</td></tr>
+<tr><td>ZW-1001</td><td>Single Color LED Controller</td>						<td>Zwave-LED-Controller.groovy</td></tr>
+<tr><td>ZW-1002</td><td>RGBW LED Controller</td>								<td>Zwave-LED-Controller.groovy</td></tr>
+<tr><td>ZW-3001</td><td>3 Zone / 3 Scene Single Color Touch Panel White</td>	<td>Zwave-Touch-Panel.groovy / Zwave-Touch-Panel-Child.groovy</td></tr>
+<tr><td>ZW-3002</td><td>3 Scene Color Touch Panel White</td>					<td>Zwave-Touch-Panel.groovy / Zwave-Touch-Panel-Child.groovy</td></tr>
+<tr><td>ZW-3003</td><td>3 Scene Color Touch Panel Black</td>					<td>Zwave-Touch-Panel.groovy / Zwave-Touch-Panel-Child.groovy</td></tr>
+<tr><td>ZW-3004</td><td>3 Zone Color Touch Panel White</td>						<td>Zwave-Touch-Panel.groovy / Zwave-Touch-Panel-Child.groovy</td></tr>
+<tr><td>ZW-3005</td><td>3 Zone Color Touch Panel Black</td>						<td>Zwave-Touch-Panel.groovy / Zwave-Touch-Panel-Child.groovy</td></tr>
+<tr><td>ZW-3011</td><td>3 Zone / 3 Scene CCT Color Touch Panel White</td>		<td>Zwave-Touch-Panel.groovy / Zwave-Touch-Panel-Child.groovy</td></tr>
+<tr><td>ZW-4001</td><td>Micro Controller and Lamp Module</td>					<td>Zwave-Micro-Controller.groovy</td></tr>
 </table>
 
