@@ -79,10 +79,11 @@ metadata {
 			}
 			input name: "stageModeSpeed", type: "number", description: "", title: "Light Effect Speed 0-255 (default 243)", defaultValue: 243, required: true
 			input name: "stageModeHue", type: "number", description: "", title: "Hue Of Fixed Color Light Effects 0-360", defaultValue: 0, required: true
-			if (getDataValue("deviceModel") == "2") {
+			if (getDataValue("deviceModel") == "2" && wwComponent) {
 				input description: "<table><tr><th>Number</th><th>Color Component</th></tr><tr><td>1</td><td>Red</td></tr><tr><td>2</td><td>Green</td></tr><tr><td>3</td><td>Blue</td></tr><td>4</td><td>WarmWhite</td></tr></table>", title: "Output Descriptions", displayDuringSetup: false, type: "paragraph", element: "paragraph"
-			}
-			if (getDataValue("deviceModel") == "1") {
+			} else if (getDataValue("deviceModel") == "2" && !wwComponent) {
+				input description: "<table><tr><th>Number</th><th>Color Component</th></tr><tr><td>1</td><td>Red</td></tr><tr><td>2</td><td>Green</td></tr><tr><td>3</td><td>Blue</td></tr><td>4</td><td>Empty</td></tr></table>", title: "Output Descriptions", displayDuringSetup: false, type: "paragraph", element: "paragraph"
+			} else if (getDataValue("deviceModel") == "1") {
 				input description: "<table><tr><th>Number</th><th>Color Component</th></tr><tr><td>1</td><td>WarmWhite</td></tr><tr><td>2</td><td>ColdWhite</td></tr><tr><td>3</td><td>WarmWhite</td></tr><td>4</td><td>ColdWhite</td></tr></table>", title: "Output Descriptions", displayDuringSetup: false, type: "paragraph", element: "paragraph"
 			}
 		}
