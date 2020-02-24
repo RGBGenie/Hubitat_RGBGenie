@@ -150,9 +150,9 @@ def parse(description) {
 		def cmd = zwave.parse(description, CMD_CLASS_VERS)
 		if (cmd) {
 			result = zwaveEvent(cmd)
-			logDebug("${description} parsed to $result")
+			if (logEnable) log.debug("${description} parsed to $result")
 		} else {
-			logWarn("unable to parse: ${description}")
+			log.warn("unable to parse: ${description}")
 		}
 	}
 }
