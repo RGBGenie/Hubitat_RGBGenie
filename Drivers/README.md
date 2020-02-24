@@ -16,7 +16,7 @@ Optionally the child drivers can utilize the Scene buttons as button controllers
 
 # Device / Driver List
 <table>
-<tr><th>Model</th><th>Description</td><th>Driver</th></tr>
+<tr><th>Model</th><th>Description</th><th>Driver</th></tr>
 <tr><td>ZV-1008</td><td>RGBW LED Controller with built-in power supply</td><td>LED-Controller.groovy</td></tr>
 <tr><td>ZW-1000</td><td>CCT LED Controller</td><td>LED-Controller.groovy</td><tr>
 <tr><td>ZW-1001</td><td>Single Color LED Controller</td><td>LED-Controller.groovy</td></tr>
