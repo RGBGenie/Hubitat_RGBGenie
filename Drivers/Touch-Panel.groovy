@@ -61,7 +61,6 @@ def initialize() {
 	}
     cmds+=pollAssociations()
     updateDataValue("driverVer", DRIVER_VER)
-    cmds+=processAssociations()
     commands(cmds)
 }
 
