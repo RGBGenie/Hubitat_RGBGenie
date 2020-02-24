@@ -447,7 +447,7 @@ def ping() {
 def startLevelChange(direction) {
     def upDownVal = direction == "down" ? 1 : 0
 	logDebug "got startLevelChange(${direction})"
-    commands([zwave.switchMultilevelV3.switchMultilevelStartLevelChange(ignoreStartLevel: 1, startLevel: 1, upDown: upDownVal)])
+    commands([zwave.switchMultilevelV2.switchMultilevelStartLevelChange(ignoreStartLevel: 1, startLevel: 1, upDown: upDownVal)])
 }
 
 def stopLevelChange() {
