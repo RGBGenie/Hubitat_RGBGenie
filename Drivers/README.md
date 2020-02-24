@@ -1,12 +1,12 @@
 # Hubitat RGBGenie Drivers
 
-Thank you for choosing RGBGenie for your lighting solution! Here you will find the drivers needed to utilize the full functionality of your devices.
+Thank you for choosing RGBGenie for your lighting solution! Here you will find the drivers needed to utilize the full functionality of your devices in the Hubitat platform.  We want you to be 100% satisified with your purchase and should you have any questions, please send us a message at info@RGBgenie.com or feel free to call us at 520-338-8849.  
 
 
 # LED Controllers 
 
-All LED controllers work through the LED-Controller.groovy driver <br>
-The LED controller driver allows you to change the type of device so you are not limited by the original model purchase. You can swap between CCT, Single Color, and RGBW models, and it will change the device's functionality at a firmware level.<br><br>
+All RGBgenie Z-Wave Plus LED controllers work through the Z-Wave LED-Controller.groovy driver <br>
+The LED controller driver allows you to change the type of device so you are not limited by the original model purchase. You can adjust between CCT, Single Color, and RGBW models, and it will change the device's functionality at a firmware level.<br><br>
 RGBW Models:<br>
 You can optionally enable / disable the WarmWhite component so if you are using RGB only LED strips you won't get signals sent to the WarmWhite output mistakenly. <br>
 When using just RGB LEDs color temperature is simulated using just RGB color elemets. Between 2700K to 6500K <br>
@@ -16,10 +16,10 @@ When using RGBW LEDs, to get the best color temperature result, you can set the 
 
 # Touch Panels
 
-A child driver can be loaded for each zone on the multi zone models, the Scene only models are 1 Zone.<br>
-This child driver can be used with the Hubitat built-in mirror application to syncronize the output of the touch panel to groups of devices of any type ex: Z-Wave Zigbee WiFi.<br> 
+A child driver can be loaded for each zone on the multi zone models, the Scene only models are a single Zone by default.<br>
+This child driver can be used with the Hubitat built-in mirror me application to syncronize the output of the touch panel to groups of devices that do not support Z-wave associations.  For example, Zigbee or Wifi devices.<br> 
 Optionally the child drivers can utilize the Scene buttons as button controllers or scene capture / activate. With the button controller functionality on a 3 scene / 3 zone touch panel you would end up with 9 buttons that can be pushed or held to have actions mapped to any functionality in hubitat.<br><br>
-The touch panels support any combination of child drivers and direct z-wave association up to 12 devices per zone.
+All touch panels support up to 12 associations directly, including the lifeline (01) back to Hubitat.  These can be utilized in any combination per zone, including multiple occurances across each zone in the multizone units.  Endpoint devices bound via the child lifeline run independantly through hub commands and do not affect the direct association device limit of 12.
 
 # Device / Driver List
 <table>
