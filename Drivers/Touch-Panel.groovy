@@ -71,12 +71,13 @@ def updated() {
                     child.defineMe(getDataValue("deviceId"))   
                     cmds << addHubMultiChannel(i)
 				}        
-            }          
+            }
+            cmds += addHubMultiChannel(i)
         } else {
             if (getChildDevice("${device.deviceNetworkId}-$i")) {
-                deleteChildDevice("${device.deviceNetworkId}-$i")
-                cmds << removeHubMultiChannel(i)
+                deleteChildDevice("${device.deviceNetworkId}-$i") 
             }
+            cmds += removeHubMultiChannel(i)
 	    }
     }
     cmds+=processAssociations()
@@ -91,6 +92,7 @@ def refresh() {
     def cmds=[]
     cmds+=pollAssociations()
     commands(cmds)
+    
 }
 
 def installed() {
@@ -105,6 +107,7 @@ def pollAssociations() {
     def cmds=[]
     for(int i = 1;i<=NUMBER_OF_GROUPS;i++) {
         cmds << zwave.associationV2.associationGet(groupingIdentifier:i)
+        cmds << zwave.multiChannelAssociationV2.multiChannelAssociationGet(groupingIdentifier: i)
     }
     if (logEnable) log.debug "pollAssociations cmds: ${cmds}"
     return cmds
@@ -130,6 +133,11 @@ def zwaveEvent(hubitat.zwave.commands.securityv1.SecurityMessageEncapsulation cm
         state.sec = 1
         zwaveEvent(encapsulatedCommand)
     }
+}
+
+def zwaveEvent(hubitat.zwave.commands.multichannelassociationv2.MultiChannelAssociationReport cmd) {
+    if (logEnable) log.debug "multichannel association report: ${cmd}"
+    device.updateDataValue("zwaveAssociationMultiG${cmd.groupingIdentifier}", "${cmd.multiChannelNodeIds}" )
 }
 
 def zwaveEvent(hubitat.zwave.Command cmd) {
@@ -165,6 +173,7 @@ def setDefaultAssociation() {
     //def hubitatHubID = (zwaveHubNodeId.toString().format( '%02x', zwaveHubNodeId )).toUpperCase()
     def cmds=[]
     cmds << zwave.associationV2.associationSet(groupingIdentifier: 1, nodeId: zwaveHubNodeId)
+    cmds << zwave.multiChannelAssociationV2.multiChannelAssociationGet(groupingIdentifier: group)
     return cmds
 }
 
@@ -172,6 +181,7 @@ def addHubMultiChannel(zone) {
     def cmds=[]
     def group=zone+1
     cmds << zwave.multiChannelAssociationV2.multiChannelAssociationSet(groupingIdentifier: group, nodeId: [0,zwaveHubNodeId,zone as Integer])
+    cmds << zwave.multiChannelAssociationV2.multiChannelAssociationGet(groupingIdentifier: group)
     return cmds
 }
 
