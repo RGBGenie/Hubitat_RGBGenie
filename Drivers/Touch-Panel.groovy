@@ -1,6 +1,9 @@
-// RGB 3Zone Touch Panel Driver
-
-
+/*
+*	Touch Panel Driver
+*	Code written for RGBGenie by Bryan Copeland
+*
+*
+*/
 metadata {
 	definition (name: "RGBGenie Touch Panel", namespace: "rgbgenie", author: "RGBGenie") {
         capability "Actuator"

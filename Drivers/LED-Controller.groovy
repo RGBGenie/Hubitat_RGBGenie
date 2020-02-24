@@ -1,4 +1,7 @@
 /* 
+*	LED Controller Driver
+*	Code written for RGBGenie by Bryan Copeland with major contributions from Adam Kempenich
+*
 *    - Added clamp(value, lowerBound (default 0), upperBound (default 100)) method
 *    - Updated color method for unincluded parameters and removed extra parameters from setHue/setSaturation
 *    - Added hue 360º option for users with 0-100 default hues and hueMode setting
@@ -15,7 +18,7 @@
 import hubitat.helper.ColorUtils
 
 metadata {
-	definition (name: "RGBGenie LED Controller", namespace: "rgbgenie", author: "Bryan Copeland") {
+	definition (name: "RGBGenie LED Controller", namespace: "rgbgenie", author: "RGBGenie") {
 		capability "Actuator"
 		capability "ChangeLevel"
 		capability "ColorControl"

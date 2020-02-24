@@ -1,8 +1,14 @@
+/*
+*	Touch Panel Child Driver
+*	Code written for RGBGenie by Bryan Copeland
+*
+*
+*/
 
 import hubitat.helper.ColorUtils
 
 metadata {
-	definition (name: "RGBGenie Touch Panel Child", namespace: "rgbgenie", author: "Bryan Copeland") {
+	definition (name: "RGBGenie Touch Panel Child", namespace: "rgbgenie", author: "RGBGenie") {
 		capability "SwitchLevel"
 		capability "PushableButton"
 		capability "HoldableButton"
