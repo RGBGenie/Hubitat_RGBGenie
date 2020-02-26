@@ -3,14 +3,14 @@
 *	Code written for RGBGenie by Bryan Copeland
 *
 *
-*
+*   Updated 2020-02-26 Added importUrl
 *
 */
 import groovy.transform.Field
 
 
 metadata {
-    definition (name: "RGBGenie Micro Controller ZW",namespace: "rgbgenie", author: "RGBGenie") {
+    definition (name: "RGBGenie Micro Controller ZW",namespace: "rgbgenie", author: "RGBGenie", importUrl: "https://raw.githubusercontent.com/RGBGenie/Hubitat_RGBGenie/master/Drivers/Zwave-Micro-Controller.groovy") {
         capability "Actuator"
         capability "Switch"
         capability "Switch Level"

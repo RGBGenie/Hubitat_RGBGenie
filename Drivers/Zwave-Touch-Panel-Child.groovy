@@ -2,13 +2,14 @@
 *	Touch Panel Child Driver
 *	Code written for RGBGenie by Bryan Copeland
 *
+*   Updated 2020-02-26 Added importUrl
 *
 */
 
 import hubitat.helper.ColorUtils
 
 metadata {
-	definition (name: "RGBGenie Touch Panel Child ZW", namespace: "rgbgenie", author: "RGBGenie") {
+	definition (name: "RGBGenie Touch Panel Child ZW", namespace: "rgbgenie", author: "RGBGenie", importUrl: "https://raw.githubusercontent.com/RGBGenie/Hubitat_RGBGenie/master/Drivers/Zwave-Touch-Panel-Child.groovy") {
 		capability "SwitchLevel"
 		capability "PushableButton"
 		capability "HoldableButton"

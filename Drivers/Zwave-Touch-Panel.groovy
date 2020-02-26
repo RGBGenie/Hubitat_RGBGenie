@@ -2,10 +2,10 @@
 *	Touch Panel Driver
 *	Code written for RGBGenie by Bryan Copeland
 *
-*
+*   Updated 2020-02-26 Added importUrl
 */
 metadata {
-	definition (name: "RGBGenie Touch Panel ZW", namespace: "rgbgenie", author: "RGBGenie") {
+	definition (name: "RGBGenie Touch Panel ZW", namespace: "rgbgenie", author: "RGBGenie", importUrl: "https://raw.githubusercontent.com/RGBGenie/Hubitat_RGBGenie/master/Drivers/Zwave-Touch-Panel.groovy") {
         capability "Actuator"
         capability "Configuration"
         capability "Refresh"

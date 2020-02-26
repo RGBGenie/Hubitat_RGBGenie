@@ -10,15 +10,14 @@
 *    - Updated colorPrestage method for setColor
 *    - Adding comments to methods (left off here)
 *
-*    ******************
-*     Add license here
-*    ******************
+*   Updated 2020-02-26 Added importUrl and optional gamma correction on setColor events
+*
 */
 
 import hubitat.helper.ColorUtils
 
 metadata {
-	definition (name: "RGBGenie LED Controller ZW", namespace: "rgbgenie", author: "RGBGenie") {
+	definition (name: "RGBGenie LED Controller ZW", namespace: "rgbgenie", author: "RGBGenie", importUrl: "https://raw.githubusercontent.com/RGBGenie/Hubitat_RGBGenie/master/Drivers/Zwave-LED-Controller.groovy" ) {
 		capability "Actuator"
 		capability "ChangeLevel"
 		capability "ColorControl"
@@ -58,24 +57,17 @@ metadata {
 			input name: "loadStateSave", type: "enum", description: "", title: "Power fail load state restore", defaultValue: 0, required: true, options: [0: "Shut Off Load", 1: "Turn On Load", 2: "Restore Last State"]
 			input name: "deviceType", type: "enum", description: "", title: "Change Device Type", defaultValue: getDataValue("deviceModel"), required: false, options: [0: "Single Color", 1: "CCT", 2: "RGBW"]
 			
-			if (getDataValue("deviceModel") == "1") {
-				// Color Model-specific settings
-
-				// Since technically you can use either ... best to convert 0-100 Hues to 0-360
-				input name: "hueMode", type: "bool", description: "", title: "Send hue in 0-100 (off) or 0-360 (on)", defaultValue: false, required: true
-			}
-
 			if (getDataValue("deviceModel") == "1" || getDataValue("deviceModel")=="2") {
 				// Color, or Color Temperature Model-specific settings
-
 				input name: "colorPrestage", type: "bool", description: "", title: "Enable Color Prestaging", defaultValue: false, required: true
 				input name: "colorDuration", type: "number", description: "", title: "Color Transition Duration", defaultValue: 3, required: true			
 			}
 			if (getDataValue("deviceModel")=="2") {
-				// Color Temperature Model-specific settings
-
+				// Color Model-specific settings
 				input name: "wwComponent", type: "bool", description: "", title: "Enable Warm White Component", defaultValue: true, required: true
 				input name: "wwKelvin", type: "number", description: "", title: "Warm White Temperature", defaultValue: 2700, required: true
+				input name: "hueMode", type: "bool", description: "", title: "Send hue in 0-100 (off) or 0-360 (on)", defaultValue: false, required: true
+				input name: "enableGammaCorrect", type: "bool", description: "May cause a slight difference in reported color", title: "Enable gamma correction on setColor", defaultValue: false, required: true
 			}
 			input name: "stageModeSpeed", type: "number", description: "", title: "Light Effect Speed 0-255 (default 243)", defaultValue: 243, required: true
 			input name: "stageModeHue", type: "number", description: "", title: "Hue Of Fixed Color Light Effects 0-360", defaultValue: 0, required: true
@@ -503,9 +495,11 @@ def setColor(value) {
 		def rgb = ColorUtils.hsvToRGB([setValue.hue, setValue.saturation, setValue.level])
 		
 		logDebug "HSL Converted to R:${rgb[0]} G:${rgb[1]} B:${rgb[2]}"
-		
-		result << zwave.switchColorV3.switchColorSet(red: rgb[0], green: rgb[1], blue: rgb[2], warmWhite:0, dimmingDuration: duration)
-		
+		if (enableGammaCorrect) {
+			result << zwave.switchColorV3.switchColorSet(red: gammaCorrect(rgb[0]), green: gammaCorrect(rgb[1]), blue: gammaCorrect(rgb[2]), warmWhite:0, dimmingDuration: duration)
+		} else {
+			result << zwave.switchColorV3.switchColorSet(red: rgb[0], green: rgb[1], blue: rgb[2], warmWhite:0, dimmingDuration: duration)
+		}
 		if ((device.currentValue("switch") != "on") && !colorPrestage) {
 			logDebug "Turning device on with pre-staging"
  			result << zwave.basicV1.basicSet(value: 0xFF)
@@ -737,24 +731,4 @@ def clamp( value, lowerBound = 0, upperBound = 100 ){
     return value
 }
 
-def rgbToCt(Float r, Float g, Float b) {
-	r=r/255
-	g=g/255
-	b=b/255
-	//def R=(r>0.4045) ? Math.pow((r+0.055)/ 1.055, 2.4) : ( r / 12.92)
-	//def G=(g>0.4045) ? Math.pow((g+0.055)/ 1.055, 2.4) : ( g / 12.92)
-	//def B=(b>0.4045) ? Math.pow((b+0.055)/ 1.055, 2.4) : ( b / 12.92)
 
-	X = (r * 0.664511) + (g * 0.154324) + (b * 0.162028)
-	Y = (r * 0.283881) + (g * 0.668433) + (b * 0.047685)
-	Z = (r * 0.000088) + (g * 0.072310) + (b * 0.986039)
-	x = (X/(X+Y+Z))
-	y = (Y/(X+Y+Z))
-	return cieToCt(x,y)
-}
-
-def cieToCt(x,y) {
-	n = ((x-0.3320)/(0.1858-y))
-	CCT = (437*Math.pow(n,3))+(3601*Math.pow(n,2))+(6861*n)+5517
-	return Math.round(CCT)
-}
