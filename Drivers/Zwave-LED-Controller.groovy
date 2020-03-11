@@ -15,6 +15,7 @@
 */
 
 import hubitat.helper.ColorUtils
+import groovy.transform.Field
 
 metadata {
 	definition (name: "RGBGenie LED Controller ZW", namespace: "rgbgenie", author: "RGBGenie", importUrl: "https://raw.githubusercontent.com/RGBGenie/Hubitat_RGBGenie/master/Drivers/Zwave-LED-Controller.groovy" ) {
@@ -82,6 +83,7 @@ metadata {
 	}
 }
 
+@Field static Map colorReceived = ["red": null, "green": null, "blue": null, "warmWhite": null, "coldWhite": null]
 
 private getRGBW_NAMES() { [RED, GREEN, BLUE, WARM_WHITE] }
 private getRGB_NAMES() { [RED, GREEN, BLUE] }
@@ -164,7 +166,6 @@ private hueToHueByte(hueValue) {
 
 
 private initializeVars() {
-	state.colorReceived = ["red": null, "green": null, "blue": null, "warmWhite": null, "coldWhite": null]
 	state.lightEffects = [
 		"0":"None",
 		"1":"Fade in/out mode, fixed color", 
@@ -301,29 +302,28 @@ def zwaveEvent(hubitat.zwave.commands.switchmultilevelv3.SwitchMultilevelReport 
 
 def zwaveEvent(hubitat.zwave.commands.switchcolorv3.SwitchColorReport cmd) {
 	logDebug "got SwitchColorReport: $cmd"
-	if (!state.colorReceived) state.colorReceived = ["red": null, "green": null, "blue": null, "warmWhite": null, "coldWhite": null]
-	state.colorReceived[cmd.colorComponent] = cmd.targetValue
+	colorReceived[cmd.colorComponent] = cmd.targetValue
 	switch (getDataValue("deviceModel")) {
 		case "1":
 			// CCT Device Type
-			if (CCT_NAMES.every { state.colorReceived[it] != null }) {
+			if (CCT_NAMES.every { colorReceived[it] != null }) {
 				// Got all CCT colors
-				def warmWhite = state.colorReceived["warmWhite"]
-				def coldWhite = state.colorReceived["coldWhite"]
+				def warmWhite = colorReceived["warmWhite"]
+				def coldWhite = colorReceived["coldWhite"]
 				def colorTemp = COLOR_TEMP_MIN + (COLOR_TEMP_DIFF / 2)
 				if (warmWhite != coldWhite) {
 					colorTemp = (COLOR_TEMP_MAX - (COLOR_TEMP_DIFF * warmWhite) / 255) as Integer
 				}
 				sendEvent(name: "colorTemperature", value: colorTemp)
 				// clear state values
-				CCT_NAMES.collect { state.colorReceived[it] = null }
+				CCT_NAMES.collect { colorReceived[it] = null }
 			}
 		break
 		case "2":
 			// RGBW Device Type
-			if (RGBW_NAMES.every { state.colorReceived[it] != null }) {
+			if (RGBW_NAMES.every { colorReceived[it] != null }) {
 				if (device.currentValue("colorMode") == "RGB") {
-					def hsv=ColorUtils.rgbToHSV([state.colorReceived["red"], state.colorReceived["green"], state.colorReceived["blue"]])
+					def hsv=ColorUtils.rgbToHSV([colorReceived["red"], colorReceived["green"], colorReceived["blue"]])
 					def hue=hsv[0]
 					def sat=hsv[1]
 					def lvl=hsv[2]
@@ -340,19 +340,18 @@ def zwaveEvent(hubitat.zwave.commands.switchcolorv3.SwitchColorReport cmd) {
 				} else { 
 					if (wwComponent) {
 						def colorTemp = COLOR_TEMP_MIN + (COLOR_TEMP_DIFF_RGBW / 2)
-						def warmWhite = state.colorReceived["warmWhite"]
-						def coldWhite = state.colorReceived["red"]
+						def warmWhite = colorReceived["warmWhite"]
+						def coldWhite = colorReceived["red"]
 						if (warmWhite != coldWhite) colorTemp = (COLOR_TEMP_MAX - (COLOR_TEMP_DIFF_RGBW * warmWhite) / 255) as Integer
 						sendEvent(name: "colorTemperature", value: colorTemp)
 					} else {
 						// Math is hard
 						sendEvent(name: "colorTemperature", value: state.ctTarget)
-						//sendEvent(name: "colorTemperature", value: rgbToCt(state.colorReceived['red'] as Float, state.colorReceived['green'] as Float, state.colorReceived['blue'] as Float))
 					}
 
 				}
 				// clear state values
-				RGBW_NAMES.collect { state.colorReceived[it] = null }
+				RGBW_NAMES.collect { colorReceived[it] = null }
 			}
 		break
 	}
@@ -477,7 +476,6 @@ def setHue(value) {
 def setColor(value) {
 	// Sets the color of a device from HSL
 
-	state.colorReceived = ["red": null, "green": null, "blue": null, "warmWhite": null, "coldWhite": null]
 	def setValue = [:]
 	def duration=colorDuration?colorDuration:3
 
@@ -523,7 +521,6 @@ def setColorTemperature(temp) {
 
 	temp = clamp(temp, 1000, 12000)
 
-	state.colorReceived = ["red": null, "green": null, "blue": null, "warmWhite": null, "coldWhite": null]
 	def duration=colorDuration?colorDuration:3
 	def warmWhite=0
 	def coldWhite=0
