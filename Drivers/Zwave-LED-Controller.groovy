@@ -83,8 +83,6 @@ metadata {
 	}
 }
 
-@Field static Map colorReceived = ["red": null, "green": null, "blue": null, "warmWhite": null, "coldWhite": null]
-
 private getRGBW_NAMES() { [RED, GREEN, BLUE, WARM_WHITE] }
 private getRGB_NAMES() { [RED, GREEN, BLUE] }
 private getCCT_NAMES() { [WARM_WHITE, COLD_WHITE] }
@@ -302,28 +300,29 @@ def zwaveEvent(hubitat.zwave.commands.switchmultilevelv3.SwitchMultilevelReport 
 
 def zwaveEvent(hubitat.zwave.commands.switchcolorv3.SwitchColorReport cmd) {
 	logDebug "got SwitchColorReport: $cmd"
-	colorReceived[cmd.colorComponent] = cmd.targetValue
+	if (!state.colorReceived) state.colorReceived=["red": null, "green": null, "blue": null, "warmWhite": null, "coldWhite": null]
+	state.colorReceived[cmd.colorComponent] = cmd.targetValue
 	switch (getDataValue("deviceModel")) {
 		case "1":
 			// CCT Device Type
-			if (CCT_NAMES.every { colorReceived[it] != null }) {
+			if (CCT_NAMES.every { state.colorReceived[it] != null }) {
 				// Got all CCT colors
-				def warmWhite = colorReceived["warmWhite"]
-				def coldWhite = colorReceived["coldWhite"]
+				def warmWhite = state.colorReceived["warmWhite"]
+				def coldWhite = state.colorReceived["coldWhite"]
 				def colorTemp = COLOR_TEMP_MIN + (COLOR_TEMP_DIFF / 2)
 				if (warmWhite != coldWhite) {
 					colorTemp = (COLOR_TEMP_MAX - (COLOR_TEMP_DIFF * warmWhite) / 255) as Integer
 				}
 				sendEvent(name: "colorTemperature", value: colorTemp)
 				// clear state values
-				CCT_NAMES.collect { colorReceived[it] = null }
+				CCT_NAMES.collect { state.colorReceived[it] = null }
 			}
 		break
 		case "2":
 			// RGBW Device Type
-			if (RGBW_NAMES.every { colorReceived[it] != null }) {
+			if (RGBW_NAMES.every { state.colorReceived[it] != null }) {
 				if (device.currentValue("colorMode") == "RGB") {
-					def hsv=ColorUtils.rgbToHSV([colorReceived["red"], colorReceived["green"], colorReceived["blue"]])
+					def hsv=ColorUtils.rgbToHSV([state.colorReceived["red"], state.colorReceived["green"], state.colorReceived["blue"]])
 					def hue=hsv[0]
 					def sat=hsv[1]
 					def lvl=hsv[2]
@@ -340,8 +339,8 @@ def zwaveEvent(hubitat.zwave.commands.switchcolorv3.SwitchColorReport cmd) {
 				} else { 
 					if (wwComponent) {
 						def colorTemp = COLOR_TEMP_MIN + (COLOR_TEMP_DIFF_RGBW / 2)
-						def warmWhite = colorReceived["warmWhite"]
-						def coldWhite = colorReceived["red"]
+						def warmWhite = state.colorReceived["warmWhite"]
+						def coldWhite = state.colorReceived["red"]
 						if (warmWhite != coldWhite) colorTemp = (COLOR_TEMP_MAX - (COLOR_TEMP_DIFF_RGBW * warmWhite) / 255) as Integer
 						sendEvent(name: "colorTemperature", value: colorTemp)
 					} else {
@@ -351,7 +350,7 @@ def zwaveEvent(hubitat.zwave.commands.switchcolorv3.SwitchColorReport cmd) {
 
 				}
 				// clear state values
-				RGBW_NAMES.collect { colorReceived[it] = null }
+				RGBW_NAMES.collect { state.colorReceived[it] = null }
 			}
 		break
 	}
