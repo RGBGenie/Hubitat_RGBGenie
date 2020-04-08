@@ -164,10 +164,11 @@ String secureCommand(hubitat.zwave.Command cmd) {
 }
 
 String secureCommand(String cmd) {
+	String encap = ""
 	if (getDataValue("zwaveSecurePairingComplete") != "true") {
 		return cmd
 	} else {
-		encap ="988100"
+		encap = "988100"
 	}
 	return "${encap}${cmd}"
 }
