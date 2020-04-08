@@ -66,7 +66,7 @@ void initializeVars() {
     state.initialized=true
 }
 
-def installed() {
+void installed() {
     device.updateSetting("logEnable", [value: "true", type: "bool"])
     runIn(1800,logsOff)
 }
