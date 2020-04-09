@@ -28,7 +28,7 @@ metadata {
 }
 
 @Field static Map configParams = [
-		1: [input: [name: "configParam2", type: "enum", title: "Power fail load state restore", description: "", defaultValue: 0, options: [0: "Shut Off Load", 1:"Turn On Load", 2:"Restore Last State"]], parameterSize: 1],
+		2: [input: [name: "configParam2", type: "enum", title: "Power fail load state restore", description: "", defaultValue: 0, options: [0: "Shut Off Load", 1:"Turn On Load", 2:"Restore Last State"]], parameterSize: 1],
 		4: [input: [name: "configParam4", type: "number", title: "Default Fade Time 0-254", description: "seconds", range: "0..254", defaultValue: 1], parameterSize: 1],
 		5: [input: [name: "configParam5", type: "number", title: "Minimum Level", description: "percent", range: "0..50", defaultValue: 0], parameterSize: 1],
 		6: [input: [name: "configParam6", type: "enum", title: "MOSFET Driving Type", description: "",  defaultValue: 0, options: [0: "Trailing Edge", 1:"Leading Edge"]], parameterSize: 1]
