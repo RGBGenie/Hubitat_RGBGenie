@@ -4,6 +4,7 @@
 *
 *   Updated 2020-02-26 Added importUrl and optional gamma correction on setColor events
 *   Updated 2020-04-08 Update to current coding standards
+*   Updated 2020-04-11 Added duplicate event filtering
 *
 */
 
@@ -140,6 +141,13 @@ void zwaveEvent(hubitat.zwave.commands.securityv1.SecurityMessageEncapsulation c
 	}
 }
 
+void eventProcess(Map evt) {
+	if (device.currentValue(evt.name).toString() != evt.value.toString()) {
+		evt.isStateChange=true
+		sendEvent(evt)
+	}
+}
+
 void parse(String description) {
 	if (logEnable) log.debug "parse:${description}"
 	hubitat.zwave.Command cmd = zwave.parse(description, CMD_CLASS_VERS)
@@ -270,9 +278,9 @@ void zwaveEvent(hubitat.zwave.commands.associationcommandconfigurationv1.Command
 
 void zwaveEvent(hubitat.zwave.commands.associationv2.AssociationReport cmd) {
 	if (cmd.nodeId.any { it == zwaveHubNodeId }) {
-		sendEvent(descriptionText: "$device.displayName is associated in group ${cmd.groupingIdentifier}")
+		eventProcess(descriptionText: "$device.displayName is associated in group ${cmd.groupingIdentifier}")
 	} else if (cmd.groupingIdentifier == 1) {
-		sendEvent(descriptionText: "Associating $device.displayName in group ${cmd.groupingIdentifier}")
+		eventProcess(descriptionText: "Associating $device.displayName in group ${cmd.groupingIdentifier}")
 		sendToDevice(zwave.associationV1.associationSet(groupingIdentifier:cmd.groupingIdentifier, nodeId:zwaveHubNodeId))
 	}
 }
@@ -290,7 +298,7 @@ void zwaveEvent(hubitat.zwave.commands.configurationv2.ConfigurationReport cmd) 
 			runIn(1, refresh)
 			break
 		case 5:
-			if (device.currentValue("effectName")!=lightEffects[scaledValue]) sendEvent(name: "effectName", value: lightEffects[scaledValue])
+			eventProcess(name: "effectName", value: lightEffects[scaledValue])
 			state.effectNumber=scaledValue
 			break
 	}
@@ -339,7 +347,7 @@ void zwaveEvent(hubitat.zwave.commands.switchcolorv3.SwitchColorReport cmd) {
 				if (warmWhite != coldWhite) {
 					colorTemp = (COLOR_TEMP_MAX - (COLOR_TEMP_DIFF * warmWhite) / 255) as Integer
 				}
-				sendEvent(name: "colorTemperature", value: colorTemp)
+				eventProcess(name: "colorTemperature", value: colorTemp)
 				// clear state values
 				CCT_NAMES.collect { state.colorReceived[it] = null }
 			}
@@ -353,14 +361,14 @@ void zwaveEvent(hubitat.zwave.commands.switchcolorv3.SwitchColorReport cmd) {
 					int sat=hsv[1]
 					int lvl=hsv[2]
 					if (hue != device.currentValue("hue")) {
-						sendEvent(name:"hue", value:Math.round(hue), unit:"%")
+						eventProcess(name:"hue", value:Math.round(hue), unit:"%")
 						setGenericName(hue)
 					}
 					if (sat != device.currentValue("saturation")) {
-						sendEvent(name:"saturation", value:Math.round(sat), unit:"%")
+						eventProcess(name:"saturation", value:Math.round(sat), unit:"%")
 					}
 					if (lvl != device.currentValue("level")) {
-						sendEvent(name:"level", value:Math.round(lvl), unit:"%")
+						eventProcess(name:"level", value:Math.round(lvl), unit:"%")
 					}
 				} else {
 					if (wwComponent) {
@@ -368,10 +376,10 @@ void zwaveEvent(hubitat.zwave.commands.switchcolorv3.SwitchColorReport cmd) {
 						int warmWhite = state.colorReceived["warmWhite"]
 						int coldWhite = state.colorReceived["red"]
 						if (warmWhite != coldWhite) colorTemp = (COLOR_TEMP_MAX - (COLOR_TEMP_DIFF_RGBW * warmWhite) / 255) as Integer
-						sendEvent(name: "colorTemperature", value: colorTemp)
+						eventProcess(name: "colorTemperature", value: colorTemp)
 					} else {
 						// Math is hard
-						sendEvent(name: "colorTemperature", value: state.ctTarget)
+						eventProcess(name: "colorTemperature", value: state.ctTarget)
 					}
 
 				}
@@ -384,9 +392,9 @@ void zwaveEvent(hubitat.zwave.commands.switchcolorv3.SwitchColorReport cmd) {
 
 private void dimmerEvents(hubitat.zwave.Command cmd) {
 	String value = (cmd.value ? "on" : "off")
-	sendEvent(name: "switch", value: value, descriptionText: "$device.displayName was turned $value")
+	eventProcess(name: "switch", value: value, descriptionText: "$device.displayName was turned $value")
 	if (cmd.value) {
-		sendEvent(name: "level", value: cmd.value == 99 ? 100 : cmd.value , unit: "%")
+		eventProcess(name: "level", value: cmd.value == 99 ? 100 : cmd.value , unit: "%")
 	}
 }
 
@@ -499,7 +507,7 @@ void setColor(value) {
 			cmds.add(zwave.switchMultilevelV3.switchMultilevelGet())
 		}
 		cmds.addAll(queryAllColors())
-		sendEvent(name: "colorMode", value: "RGB")
+		eventProcess(name: "colorMode", value: "RGB")
 		sendToDevice(cmds)
 	} else {
 		log.trace "setColor not supported on this device type"
@@ -554,7 +562,7 @@ void setColorTemperature(temp) {
 		cmds.add(zwave.switchMultilevelV3.switchMultilevelGet())
 	}
 	cmds.addAll(queryAllColors())
-	sendEvent(name: "colorMode", value: "CT")
+	eventProcess(name: "colorMode", value: "CT")
 	sendToDevice(cmds)
 }
 
@@ -619,7 +627,7 @@ void setGenericTempName(temp){
 	else if (value < 6000) genericName = "Electronic"
 	else if (value <= 6500) genericName = "Skylight"
 	else if (value < 20000) genericName = "Polar"
-	sendEvent(name: "colorName", value: genericName)
+	eventProcess(name: "colorName", value: genericName)
 }
 
 void setGenericName(hue){
@@ -654,6 +662,6 @@ void setGenericName(hue){
 			break
 	}
 	if (device.currentValue("saturation") == 0) colorName = "White"
-	sendEvent(name: "colorName", value: colorName)
+	eventProcess(name: "colorName", value: colorName)
 }
 

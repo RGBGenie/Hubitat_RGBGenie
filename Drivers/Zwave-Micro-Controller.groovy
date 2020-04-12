@@ -5,6 +5,7 @@
 *
 *   Updated 2020-02-26 Added importUrl
 *   Updated 2020-04-07 Re-write for current coding standards
+*   Updated 2020-04-11 Added duplicate event filtering
 *
 */
 import groovy.transform.Field
@@ -107,6 +108,13 @@ void zwaveEvent(hubitat.zwave.commands.securityv1.SecurityMessageEncapsulation c
 	}
 }
 
+void eventProcess(Map evt) {
+	if (device.currentValue(evt.name).toString() != evt.value.toString()) {
+		evt.isStateChange=true
+		sendEvent(evt)
+	}
+}
+
 void parse(String description) {
 	if (logEnable) log.debug "parse:${description}"
 	hubitat.zwave.Command cmd = zwave.parse(description, CMD_CLASS_VERS)
@@ -197,9 +205,9 @@ void zwaveEvent(hubitat.zwave.commands.switchmultilevelv3.SwitchMultilevelReport
 
 private void dimmerEvents(hubitat.zwave.Command cmd) {
 	String value = (cmd.value ? "on" : "off")
-	sendEvent(name: "switch", value: value, descriptionText: "$device.displayName was turned $value", isStateChange: true)
+	eventProcess(name: "switch", value: value, descriptionText: "$device.displayName was turned $value", isStateChange: true)
 	if (cmd.value) {
-		sendEvent(name: "level", isStateChange: true, value: cmd.value == 99 ? 100 : cmd.value , unit: "%")
+		eventProcess(name: "level", isStateChange: true, value: cmd.value == 99 ? 100 : cmd.value , unit: "%")
 	}
 }
 
