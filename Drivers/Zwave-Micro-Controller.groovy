@@ -5,6 +5,7 @@
 *
 *   Updated 2020-02-26 Added importUrl
 *   Updated 2020-04-07 Re-write for current coding standards
+*   Updated 2020-04-11 Added duplicate event filtering
 *
 */
 import groovy.transform.Field
@@ -28,7 +29,7 @@ metadata {
 }
 
 @Field static Map configParams = [
-		1: [input: [name: "configParam2", type: "enum", title: "Power fail load state restore", description: "", defaultValue: 0, options: [0: "Shut Off Load", 1:"Turn On Load", 2:"Restore Last State"]], parameterSize: 1],
+		2: [input: [name: "configParam2", type: "enum", title: "Power fail load state restore", description: "", defaultValue: 0, options: [0: "Shut Off Load", 1:"Turn On Load", 2:"Restore Last State"]], parameterSize: 1],
 		4: [input: [name: "configParam4", type: "number", title: "Default Fade Time 0-254", description: "seconds", range: "0..254", defaultValue: 1], parameterSize: 1],
 		5: [input: [name: "configParam5", type: "number", title: "Minimum Level", description: "percent", range: "0..50", defaultValue: 0], parameterSize: 1],
 		6: [input: [name: "configParam6", type: "enum", title: "MOSFET Driving Type", description: "",  defaultValue: 0, options: [0: "Trailing Edge", 1:"Leading Edge"]], parameterSize: 1]
@@ -104,6 +105,13 @@ void zwaveEvent(hubitat.zwave.commands.securityv1.SecurityMessageEncapsulation c
 	hubitat.zwave.Command encapsulatedCommand = cmd.encapsulatedCommand(CMD_CLASS_VERS)
 	if (encapsulatedCommand) {
 		zwaveEvent(encapsulatedCommand)
+	}
+}
+
+void eventProcess(Map evt) {
+	if (device.currentValue(evt.name).toString() != evt.value.toString()) {
+		evt.isStateChange=true
+		sendEvent(evt)
 	}
 }
 
@@ -197,9 +205,9 @@ void zwaveEvent(hubitat.zwave.commands.switchmultilevelv3.SwitchMultilevelReport
 
 private void dimmerEvents(hubitat.zwave.Command cmd) {
 	String value = (cmd.value ? "on" : "off")
-	sendEvent(name: "switch", value: value, descriptionText: "$device.displayName was turned $value", isStateChange: true)
+	eventProcess(name: "switch", value: value, descriptionText: "$device.displayName was turned $value", isStateChange: true)
 	if (cmd.value) {
-		sendEvent(name: "level", isStateChange: true, value: cmd.value == 99 ? 100 : cmd.value , unit: "%")
+		eventProcess(name: "level", isStateChange: true, value: cmd.value == 99 ? 100 : cmd.value , unit: "%")
 	}
 }
 
