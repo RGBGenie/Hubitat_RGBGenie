@@ -138,7 +138,11 @@ void zwaveEvent(hubitat.zwave.commands.manufacturerspecificv2.DeviceSpecificRepo
 		case 1:
 			// serial number
 			def serialNumber=""
-			cmd.deviceIdData.each { serialNumber+=(char) it }
+			if (cmd.deviceIdDataFormat==1) {
+				cmd.deviceIdData.each { serialNumber += hubitat.helper.HexUtils.integerToHexString(it & 0xff,1).padLeft(2, '0')}
+			} else {
+				cmd.deviceIdData.each { serialNumber += (char) it }
+			}
 			device.updateDataValue("serialNumber", serialNumber)
 			break
 	}
