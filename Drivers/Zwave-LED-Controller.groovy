@@ -488,7 +488,7 @@ void setHue(value) {
 void setColor(value) {
     // Sets the color of a device from HSL
     Map setValue = [:]
-    int duration=colorDuration?colorDuration:3
+    int duration=colorDuration != null && colorDuration >= 0 ?colorDuration:3
     if(logEnable) log.debug  "setColor($value)"
     if(value.hue > 100) value.hue=100
     if (state.deviceType==2) {
@@ -520,7 +520,7 @@ void setColor(value) {
 
 void setColorTemperature(temp) {
     // Sets the colorTemperature of a device
-    int duration=colorDuration?colorDuration:3
+    int duration=colorDuration != null && colorDuration >= 0 ?colorDuration:3
     int warmWhite=0
     int coldWhite=0
     if (!cwKelvin) {
